@@ -1,5 +1,7 @@
 # WindowCreator is in a very early state, everything is subject to change.
 
+Requires PIL
+
 WindowCreator is a python utility made to eliminate the need for a virtual machine to get an image of a error box. 
 It will also be able to work as a python library for making crazy error videos.
 
