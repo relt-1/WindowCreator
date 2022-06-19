@@ -403,8 +403,8 @@ def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",
     IMAGE = put(IMAGE,Image.new("RGBA", (width-6,height-3-h(TopFrame)), (236,233,216,255)),3,h(TopFrame),"00")
     IMAGE = put(IMAGE,CloseButton,width-5,5,"20")
     if active:
-        IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\caption\\"),7,7,"00")
         IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\captionshadow\\",(10,24,131,255)),8,8,"00")
+        IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\caption\\"),7,7,"00")
     else:
         IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\caption\\",(216,228,248,255)),7,7,"00")
     if(insideimagepath != ""):
@@ -634,7 +634,7 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
         if(text != ""):
             contentwidth = max(contentwidth,w(IconImg)+25+TextDim[0]+38+9)
     if(title != ""):
-        TitleDim = measuretext7(text,"7//fonts//text//",kerningadjust=-1)
+        TitleDim = measuretext7(title,"7//fonts//text//",kerningadjust=-1)
         contentwidth = max(contentwidth,TitleDim[0]+49)
     buttonswidth = 0
     #len(buttons)*95
@@ -678,7 +678,7 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
     WithBorder = put(WithBorder, SideShine.resize((w(SideShine),(height-29-8)//4)), width, 29, "20")
     #WithBorder.show()
     if(title != ""):
-        WithBorder = put(WithBorder,resize(TextGlow,TitleDim[0]+7+14,h(TextGlow),23,23,1,1),-7,0)
+        WithBorder = put(WithBorder,resize(TextGlow,TitleDim[0]+7+14+10,h(TextGlow),23,23,1,1),-7,0)
         WithBorder = createtext7(WithBorder,8,7,title,"7//fonts//text//",kerningadjust=-1)
     
     WithBorder = put(WithBorder,resize(Window,width,height,8,8,30,8),0,0)
@@ -762,7 +762,7 @@ def Create3_1Window(icon="",text="",title="",buttons=[]):
 #o = CreateMacWindoid(icon="mac//Speech Bubble Small.png",text="This is a Mac Windoid     qwertyuiopasdfghjklzxcvbnm\n---------------------------\n---------------------------")
 
 #o = Create3_1Window(icon="3.1//Exclamation.png",text="This is a Windows 3.1 erroro.show()
-o = CreateXPWindow(0,0,"Notepad",active=False,erroriconpath="xp\\Exclamation.png",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button2="No",button3="Cancel",button1style=4)
+o = Create7Window(text="Error with no icon and buttons",title="Window title")
 o.show()
 o.save("output.png")
 
