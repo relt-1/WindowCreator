@@ -313,12 +313,23 @@ def Create7Button(text,style=0):
     Button = createtext7(Button,w(Button)//2-textsize[0]//2,4,text,"7\\fonts\\text\\",kerningadjust=-1)
     return Button
 
-def CreateXPWindow(width,height,captiontext,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
-    TopFrame = Image.open("xp/Frame Up Active.png").convert("RGBA")
-    LeftFrame = Image.open("xp/Frame Left Active.png").convert("RGBA")
-    RightFrame = Image.open("xp/Frame Right Active.png").convert("RGBA")
-    BottomFrame = Image.open("xp/Frame Bottom Active.png").convert("RGBA")
-    CloseButton = Image.open("xp/Close button.png").convert("RGBA")
+def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
+
+    if active:
+        TopFrame = Image.open("xp/Frame Up Active.png").convert("RGBA")
+        LeftFrame = Image.open("xp/Frame Left Active.png").convert("RGBA")
+        RightFrame = Image.open("xp/Frame Right Active.png").convert("RGBA")
+        BottomFrame = Image.open("xp/Frame Bottom Active.png").convert("RGBA")
+        CloseButton = Image.open("xp/Close button.png").convert("RGBA")
+    else:
+        TopFrame = Image.open("xp/Frame Up Inactive.png").convert("RGBA")
+        LeftFrame = Image.open("xp/Frame Left Inactive.png").convert("RGBA")
+        RightFrame = Image.open("xp/Frame Right Inactive.png").convert("RGBA")
+        BottomFrame = Image.open("xp/Frame Bottom Inactive.png").convert("RGBA")
+        CloseButton = Image.open("xp/Close button Inactive.png").convert("RGBA")
+        button1style = button1style*(button1style != 4)
+        button2style = button2style*(button2style != 4) 
+        button3style = button3style*(button3style != 4)
     textposx = 15+3
     textposy = 11+h(TopFrame)
     
@@ -391,8 +402,11 @@ def CreateXPWindow(width,height,captiontext,insideimagepath = "",erroriconpath="
     IMAGE = put(IMAGE,cropx(BottomFrame,w(BottomFrame)-5,w(BottomFrame)).resize((5,3),Image.NEAREST),width,height,"22")
     IMAGE = put(IMAGE,Image.new("RGBA", (width-6,height-3-h(TopFrame)), (236,233,216,255)),3,h(TopFrame),"00")
     IMAGE = put(IMAGE,CloseButton,width-5,5,"20")
-    IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\captionshadow\\",(10,24,131,255)),8,8,"00")
-    IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\caption\\"),7,7,"00")
+    if active:
+        IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\caption\\"),7,7,"00")
+        IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\captionshadow\\",(10,24,131,255)),8,8,"00")
+    else:
+        IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\caption\\",(216,228,248,255)),7,7,"00")
     if(insideimagepath != ""):
         IMAGE = put(IMAGE,insideimage,3,h(TopFrame))
     if(erroriconpath != ""):
@@ -737,10 +751,19 @@ def Create3_1Window(icon="",text="",title="",buttons=[]):
 #o = Create7Window(icon="7\\Question Mark.png",text="text",title="title",buttons=[["Cancel",0],["No",0],["Yes",4]])
 #o = Create7Window(icon="7\\Question Mark.png",text="text",title="title",buttons=[["Cancel",0],["No",0],["Yes",4]],wallpaper="7\\wallpaper.png",pos=(400,400))
 
-o = Create3_1Window(icon="3.1//Stop.png",text="hfgkdfjgdhfgkjdfg")
+#o = CreateXPWindow(0,0,captiontext="Question",erroriconpath="xp\\Question.png",errortext="Multiple buttons with different styles\nAnd showing off the multiline capabilities\n.\n.\n.\n.",button1="OK",button1style=4,button2="Cancel",button3="This button is disabled and long\nand has a double line!",button3style=3)
 
+#o = Create7Window(icon="7\\Critical Error.png",text="Example error.",buttons=[["OK",4],["Disabled button",3]])
+
+#o = CreateXPWindow(0,0,captiontext="Error",erroriconpath="xp\\Exclamation.png",errortext="This error has no buttons")
+#CreateMacAlertDialog(width,height,title="",bar=True,icon="",errortext="",subtext="",button1="",button2="",button3="",button1default=False,button2default=False,button3default=False,button1style=0,button2style=0,button3style=0)
+#CreateMacWindoid(icon="",text="",collapsed=False):
+#o = CreateMacWindow(0,0,title="Window",icon="mac//Speech Bubble.png",errortext="Mac OS 9 error",button1="OK",button1default=True)
+#o = CreateMacWindoid(icon="mac//Speech Bubble Small.png",text="This is a Mac Windoid     qwertyuiopasdfghjklzxcvbnm\n---------------------------\n---------------------------")
+
+#o = Create3_1Window(icon="3.1//Exclamation.png",text="This is a Windows 3.1 erroro.show()
+o = CreateXPWindow(0,0,"Notepad",active=False,erroriconpath="xp\\Exclamation.png",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button2="No",button3="Cancel",button1style=4)
 o.show()
-
 o.save("output.png")
 
 
