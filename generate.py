@@ -688,7 +688,38 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
 def Export7Animation(img,savepath):  #just put the generated window into img and set savepath to the folder you want it to save  "7//animoutput//" is recommended
     for i in range(16):
         ImageChops.multiply(ImageOps.deform(img, Windows7Anim(i/60)),Image.new("RGBA",(w(img),h(img)),(255,255,255,int(max(0,min(1,(i+0.1)/15))**0.5*255)))).save(savepath+str(i)+".png")
-
+def Create3_1Window(icon="",text="",title="",buttons=[]):
+    contentwidth = 0
+    contentheight = 0
+    textpos = 18
+    textposy = 16
+    if(text != ""):
+        TextImg = createtextmac(text,"3.1//fonts//text//")
+        contentwidth += w(TextImg)+18+18
+        contentheight += h(TextImg)+16
+    if(icon != ""):
+        IconImg = Image.open(icon).convert("RGBA")
+        textpos += w(IconImg)+19
+        contentwidth += w(IconImg)+19
+        contentwidth = max(contentwidth,w(IconImg)+19+19)
+        contentheight = max(contentheight,17+h(IconImg)+17)
+        if(text != ""):
+            textposy = max(16,h(IconImg)//2-h(TextImg)//2+17)
+    Window = Image.open("3.1//Window.png").convert("RGBA")
+    CloseButton = Image.open("3.1//Close Button.png").convert("RGBA")
+    CONTENT = Image.new("RGBA",(contentwidth,contentheight),(255,255,255,255))
+    if(text != ""):
+        CONTENT = put(CONTENT,TextImg,textpos,textposy)
+    if(icon != ""):
+        CONTENT = put(CONTENT,IconImg,19,17)
+    width = contentwidth+5+5
+    height = contentheight+24+5
+    IMAGE = resize(Window,width,height,6,6,24,5)
+    IMAGE = put(IMAGE,CONTENT,5,24)
+    IMAGE = put(IMAGE, CloseButton,6,5)
+    return IMAGE
+    #
+        
 # Example XP windows:
 #o = CreateXPWindow(0,0,"Notepad",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button2="No",button3="Cancel",button1style=4)
 
@@ -705,6 +736,8 @@ def Export7Animation(img,savepath):  #just put the generated window into img and
 # Example 7 windows:
 #o = Create7Window(icon="7\\Question Mark.png",text="text",title="title",buttons=[["Cancel",0],["No",0],["Yes",4]])
 #o = Create7Window(icon="7\\Question Mark.png",text="text",title="title",buttons=[["Cancel",0],["No",0],["Yes",4]],wallpaper="7\\wallpaper.png",pos=(400,400))
+
+o = Create3_1Window(icon="3.1//Stop.png",text="hfgkdfjgdhfgkjdfg")
 
 o.show()
 
