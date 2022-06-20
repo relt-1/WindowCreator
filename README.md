@@ -7,7 +7,7 @@ It will also be able to work as a python library for making crazy error videos.
 
 Example errors:
 
-![](https://i.imgur.com/3rkfdP8.png) (the black background is a github bug, the image has normal transparency)
+![](https://i.imgur.com/3rkfdP8.png)
 
 ![](https://i.imgur.com/WyQQpy2.png)
 
