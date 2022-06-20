@@ -140,7 +140,7 @@ def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(1000,1000
         width = max(width,cursorpos)
         height = max(height,h(char))
     return drawntext.crop((0,0,width,height))
-def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000)):
+def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),underline=False):
     drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
@@ -149,6 +149,22 @@ def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000)):
     newlinesizefile = open(fontdirectory+"newlinesize.txt")
     newlinesize = int(newlinesizefile.read())
     newlinesizefile.close()
+    if(underline):
+        i = text[0]
+        if(i=="\n"):
+            height += newlinesize
+            line += newlinesize
+            cursorpos = 0
+        else:
+            char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+            char = put(char, Image.new("RGBA",(w(char),1),(255,255,255,255)),0,h(char)-2)
+            colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
+            char = ImageChops.multiply(char,colorimg)
+            drawntext.paste(char,(cursorpos,line))
+            cursorpos +=w(char)
+            width = max(width,cursorpos)
+            height = max(height,h(char))
+        text = text[1:]
     for i in text:
         if(i=="\n"):
             height += newlinesize
@@ -313,6 +329,25 @@ def Create7Button(text,style=0):
     Button = createtext7(Button,w(Button)//2-textsize[0]//2,4,text,"7\\fonts\\text\\",kerningadjust=-1)
     return Button
 
+def Create3_1Button(text,style=0,underline=False):
+    styles = ["3.1/Button.png","3.1/Button Default.png"]
+    Button = Image.open(styles[style]).convert("RGBA")
+    textgraphic = createtextmac(text,"3.1//fonts//text//",underline=underline)
+    if style == 1:
+        Button = resize(Button,max(58,w(textgraphic)+5+5),h(textgraphic)+6+6,4,4,4,4)
+        Border = Image.open("3.1//Button Text Outline.png").convert("RGBA")
+        BorderImg = tile(Border,max(58,w(textgraphic)+5+5),h(textgraphic)+6+6)
+        textx = floor(w(Button)/2-w(textgraphic)/2-1)
+        textendx = textx+w(textgraphic)
+        Button = put(Button,textgraphic,textx,6,"00")
+        Button = put(Button,BorderImg.crop((textx-2,      6,                   textx-1,            7+h(textgraphic))),   textx-2,    6)
+        Button = put(Button,BorderImg.crop((textx-1,      7+h(textgraphic),    textendx,           7+h(textgraphic)+1)), textx-1,    7+h(textgraphic))
+        Button = put(Button,BorderImg.crop((textendx+1,   6,                   textendx+2,         7+h(textgraphic))),   textendx+1, 6)
+        Button = put(Button,BorderImg.crop((textx-1,      5,                   textendx,           6)),                  textx-1,    5)
+    else:
+        Button = resize(Button,max(58,w(textgraphic)+5+5),h(textgraphic)+6+6,3,3,3,3)
+        Button = put(Button,textgraphic,floor(w(Button)/2-w(textgraphic)/2-1),6,"00")
+    return Button
 def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
 
     if active:
@@ -702,35 +737,81 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
 def Export7Animation(img,savepath):  #just put the generated window into img and set savepath to the folder you want it to save  "7//animoutput//" is recommended
     for i in range(16):
         ImageChops.multiply(ImageOps.deform(img, Windows7Anim(i/60)),Image.new("RGBA",(w(img),h(img)),(255,255,255,int(max(0,min(1,(i+0.1)/15))**0.5*255)))).save(savepath+str(i)+".png")
+def even(a):
+    c = ceil(a/2)*2
+    dc = abs(c-a)
+    f = floor(a/2)*2
+    df = abs(f-a)
+    if(df <= dc):
+        return f
+    else:
+        return c
+def buttoneven(a):
+    c = ceil(a/2)*2
+    dc = abs(c-a)
+    f = floor(a/2)*2
+    df = abs(f-a)
+    if(df < dc):
+        return f
+    else:
+        return c
+def getsafe(a, i, fallback):
+    try:
+        return a[i]
+    except IndexError:
+        return fallback
 def Create3_1Window(icon="",text="",title="",buttons=[]):
     contentwidth = 0
     contentheight = 0
     textpos = 18
     textposy = 16
+    iconposy = 17
     if(text != ""):
         TextImg = createtextmac(text,"3.1//fonts//text//")
-        contentwidth += w(TextImg)+18+18
-        contentheight += h(TextImg)+16
+        contentwidth += w(TextImg)+18+17
+        contentheight += h(TextImg)+16+16
     if(icon != ""):
         IconImg = Image.open(icon).convert("RGBA")
         textpos += w(IconImg)+19
-        contentwidth += w(IconImg)+19
+        contentwidth += w(IconImg)+18
         contentwidth = max(contentwidth,w(IconImg)+19+19)
-        contentheight = max(contentheight,17+h(IconImg)+17)
+        contentheight = max(contentheight,17+h(IconImg)+15)
         if(text != ""):
             textposy = max(16,h(IconImg)//2-h(TextImg)//2+17)
+    if(title != ""):
+        TitleImg = createtextmac(text,"3.1//fonts//text//")
+        contentwidth = max(contentwidth,w(TitleImg)+20+1)
+    if buttons:
+        contentheight += 44
+    buttonswidth = 0
+    for button in buttons:
+        CurrentButton = Create3_1Button(button[0],button[1],getsafe(button,2,False))
+        buttonswidth += w(CurrentButton)+17
+    contentwidth = max(contentwidth,buttonswidth-17)
+    contentwidth = even(contentwidth)
     Window = Image.open("3.1//Window.png").convert("RGBA")
     CloseButton = Image.open("3.1//Close Button.png").convert("RGBA")
     CONTENT = Image.new("RGBA",(contentwidth,contentheight),(255,255,255,255))
     if(text != ""):
-        CONTENT = put(CONTENT,TextImg,textpos,textposy)
+        CONTENT = put(CONTENT,TextImg,even(textpos),even(textposy))
+        if(icon != ""):
+            iconposy = even(textposy+h(TextImg)/2-h(IconImg)/2)
     if(icon != ""):
-        CONTENT = put(CONTENT,IconImg,19,17)
+        CONTENT = put(CONTENT,IconImg,18,iconposy)
+    buttonpos = contentwidth/2-(58*len(buttons)+17*len(buttons)-17)/2
+    for i in range(len(buttons)):
+        CONTENT = put(CONTENT,Create3_1Button(buttons[i][0],buttons[i][1],getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
+        print(buttons[i][0]+":",buttonpos,"which is",buttoneven(buttonpos))
+        buttonpos += 58+17
+    print(contentwidth,contentheight)
     width = contentwidth+5+5
     height = contentheight+24+5
     IMAGE = resize(Window,width,height,6,6,24,5)
     IMAGE = put(IMAGE,CONTENT,5,24)
     IMAGE = put(IMAGE, CloseButton,6,5)
+    if(title != ""):
+        TitleImg = createtextmac(title,"3.1//fonts//text//",(255,255,255,255))
+        IMAGE = put(IMAGE,TitleImg,floor((contentwidth-20-1)/2-w(TitleImg)/2)+19+6,6)
     return IMAGE
     #
         
@@ -761,8 +842,17 @@ def Create3_1Window(icon="",text="",title="",buttons=[]):
 #o = CreateMacWindow(0,0,title="Window",icon="mac//Speech Bubble.png",errortext="Mac OS 9 error",button1="OK",button1default=True)
 #o = CreateMacWindoid(icon="mac//Speech Bubble Small.png",text="This is a Mac Windoid     qwertyuiopasdfghjklzxcvbnm\n---------------------------\n---------------------------")
 
-#o = Create3_1Window(icon="3.1//Exclamation.png",text="This is a Windows 3.1 erroro.show()
-o = Create7Window(text="Error with no icon and buttons",title="Window title")
+#o = Create3_1Window(icon="3.1//Exclamation.png",text="Cannot read drive a:.\n\nPlease verify the drive door is closed and that \nthe disk is formatted and free of errors.",title="Save As",buttons=[["Retry",1,True],["Cancel",0]])
+#o = Create3_1Window(icon="3.1//Exclamation.png",text="The text in the (Untitled) file has changed.\n\nDo you want to save the changes?",title="Notepad",buttons=[["Yes",1,True],["No",0,True],["Cancel",0]])
+#o = Create3_1Window(icon="3.1//Exclamation.png",text="(Untitled)\nThe image has changed.\n\nDo you want to save current changes?",title="Paintbrush",buttons=[["Yes",1,True],["No",0,True],["Cancel",0]])
+#o = Create3_1Window(text="You must be running mail with security enabled",title="Microsoft At Work Fax",buttons=[["OK",1]])
+#o = Create3_1Window(text="The selected COM port is either not supported or is \nbeing used by another device.\n\nSelect another port",title="Terminal - Error",buttons=[["OK",1]])
+o = Create3_1Window(icon="3.1//Information.png",text="Now 1.459854% more accurate!",title="The Create3_1Window function",buttons=[["OK",1]])
+#o = Create7Window(text="Error with no icon and buttons",title="Window title")
+
+#Export7Animation(o,"7//animoutput//")
+
+#o = Create3_1Button("OK",0)
 o.show()
 o.save("output.png")
 
