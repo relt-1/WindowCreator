@@ -345,7 +345,7 @@ def Create3_1Button(text,style=0,underline=False):
         Button = put(Button,BorderImg.crop((textendx+1,   6,                   textendx+2,         7+h(textgraphic))),   textendx+1, 6)
         Button = put(Button,BorderImg.crop((textx-1,      5,                   textendx,           6)),                  textx-1,    5)
     else:
-        Button = resize(Button,max(58,w(textgraphic)+5+5),h(textgraphic)+6+6,3,3,3,3)
+        Button = resize(Button,max(58,w(textgraphic)+6+6),h(textgraphic)+6+6,3,3,3,3)
         Button = put(Button,textgraphic,floor(w(Button)/2-w(textgraphic)/2-1),6,"00")
     return Button
 def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
@@ -760,7 +760,7 @@ def getsafe(a, i, fallback):
         return a[i]
     except IndexError:
         return fallback
-def Create3_1Window(icon="",text="",title="",buttons=[]):
+def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
     contentwidth = 0
     contentheight = 0
     textpos = 18
@@ -789,7 +789,10 @@ def Create3_1Window(icon="",text="",title="",buttons=[]):
         buttonswidth += w(CurrentButton)+17
     contentwidth = max(contentwidth,buttonswidth-17)
     contentwidth = even(contentwidth)
-    Window = Image.open("3.1//Window.png").convert("RGBA")
+    if active:
+        Window = Image.open("3.1//Window.png").convert("RGBA")
+    else:
+        Window = Image.open("3.1//Window Inactive.png").convert("RGBA")
     CloseButton = Image.open("3.1//Close Button.png").convert("RGBA")
     CONTENT = Image.new("RGBA",(contentwidth,contentheight),(255,255,255,255))
     if(text != ""):
@@ -799,10 +802,16 @@ def Create3_1Window(icon="",text="",title="",buttons=[]):
     if(icon != ""):
         CONTENT = put(CONTENT,IconImg,18,iconposy)
     buttonpos = contentwidth/2-(58*len(buttons)+17*len(buttons)-17)/2
-    for i in range(len(buttons)):
-        CONTENT = put(CONTENT,Create3_1Button(buttons[i][0],buttons[i][1],getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
-        print(buttons[i][0]+":",buttonpos,"which is",buttoneven(buttonpos))
-        buttonpos += 58+17
+    if active:
+        for i in range(len(buttons)):
+            CONTENT = put(CONTENT,Create3_1Button(buttons[i][0],buttons[i][1],getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
+            print(buttons[i][0]+":",buttonpos,"which is",buttoneven(buttonpos))
+            buttonpos += 58+17
+    else:
+        for i in range(len(buttons)):
+            CONTENT = put(CONTENT,Create3_1Button(buttons[i][0],0,getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
+            print(buttons[i][0]+":",buttonpos,"which is",buttoneven(buttonpos))
+            buttonpos += 58+17
     print(contentwidth,contentheight)
     width = contentwidth+5+5
     height = contentheight+24+5
@@ -810,7 +819,10 @@ def Create3_1Window(icon="",text="",title="",buttons=[]):
     IMAGE = put(IMAGE,CONTENT,5,24)
     IMAGE = put(IMAGE, CloseButton,6,5)
     if(title != ""):
-        TitleImg = createtextmac(title,"3.1//fonts//text//",(255,255,255,255))
+        if active:
+            TitleImg = createtextmac(title,"3.1//fonts//text//",(255,255,255,255))
+        else:
+            TitleImg = createtextmac(title,"3.1//fonts//text//")
         IMAGE = put(IMAGE,TitleImg,floor((contentwidth-20-1)/2-w(TitleImg)/2)+19+6,6)
     return IMAGE
     #
@@ -847,9 +859,9 @@ def Create3_1Window(icon="",text="",title="",buttons=[]):
 #o = Create3_1Window(icon="3.1//Exclamation.png",text="(Untitled)\nThe image has changed.\n\nDo you want to save current changes?",title="Paintbrush",buttons=[["Yes",1,True],["No",0,True],["Cancel",0]])
 #o = Create3_1Window(text="You must be running mail with security enabled",title="Microsoft At Work Fax",buttons=[["OK",1]])
 #o = Create3_1Window(text="The selected COM port is either not supported or is \nbeing used by another device.\n\nSelect another port",title="Terminal - Error",buttons=[["OK",1]])
-o = Create3_1Window(icon="3.1//Information.png",text="Now 1.459854% more accurate!",title="The Create3_1Window function",buttons=[["OK",1]])
+#o = Create3_1Window(icon="3.1//Information.png",text="Now 1.459854% more accurate!",title="The Create3_1Window function",buttons=[["OK",1]])
 #o = Create7Window(text="Error with no icon and buttons",title="Window title")
-
+o = Create3_1Window(icon="3.1//Question Mark.png",text="The component that you want to install requires \nMicrosoft Windows Network.\n\nDo you want to install Microsoft Workgroup \nNetwork now?",title="Remote Access",buttons=[["Yes",1,True],["No",0,True]],active=False)
 #Export7Animation(o,"7//animoutput//")
 
 #o = Create3_1Button("OK",0)
