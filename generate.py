@@ -250,6 +250,43 @@ def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0): #
         height = max(height,h(char))
     return [width,height]
 
+def createtextubuntu(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00"):
+    drawntext = Image.new("RGBA",buffersize,(255,255,0,0))
+    width = 0
+    height = 0
+    line = 0
+    cursorpos = 0
+    newlinesizefile = open(fontdirectory+"newlinesize.txt")
+    newlinesize = int(newlinesizefile.read())
+    newlinesizefile.close()
+    for i in text:
+        if(i=="\n"):
+            height += newlinesize
+            line += newlinesize
+            cursorpos = 0
+            continue
+        char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+        #colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
+        #char = ImageChops.multiply(char,colorimg)
+        drawntext.paste(char,(cursorpos,line))
+        cursorpos +=w(char)
+        width = max(width,cursorpos)
+        height = max(height,h(char))
+    drawntext = drawntext.crop((0,0,width,height))
+    drawntext = put(Image.new("RGBA",(w(im),h(im)),(0,0,0,0)),drawntext,x,y,align)
+    imgcolor = Image.new("RGBA",(w(im),h(im)),color)
+    c = imgcolor.split()
+    ir,ig,ib,ia = im.split()
+    r,g,b,a = drawntext.split()
+    #imgcolor.show()
+    red = ImageMath.eval("convert( int(((i*(255-t)/255+(c*t)/255)*a/255+i*(255-a)/255)*o/255+(i*(255-o))/255) , 'L')",i=ir,t=r,c=c[0],a=a,o=c[3])   #i is the image RGB,  t is the text RGB,  c is the RGB color variable,  a is the text alpha,  o is the alpha color variable
+    #ImageMath.eval("convert( int((255-t)*255/255),'L')",i=ir,t=r,c=c[0]).show()
+    green = ImageMath.eval("convert( int(((i*(255-t)/255+(c*t)/255)*a/255+i*(255-a)/255)*o/255+(i*(255-o))/255) , 'L')",i=ig,t=g,c=c[1],a=a,o=c[3])
+    blue = ImageMath.eval("convert( int(((i*(255-t)/255+(c*t)/255)*a/255+i*(255-a)/255)*o/255+(i*(255-o))/255) , 'L')",i=ib,t=b,c=c[2],a=a,o=c[3])
+    alpha = ImageMath.eval("convert( int(((((r+g+b)/3+(255-(r+g+b)/3)*i/255))*t/255+(i*(255-t))/255)*o/255+(i*(255-o))/255) , 'L')",i=ia,r=r,g=g,b=b,t=a,o=c[3]) #i is the image alpha,  r,g,b are RGB values of the text,  t is text alpha,  o is color alpha
+    result = Image.merge("RGBA",(red,green,blue,alpha))
+    return result
+
 def resize(im,width,height,left,right,up,down,scalingmethod=Image.NEAREST):  #this resizes image but keeps margins intact. think of Unity GUI elements
     if width < w(im):
         im = im.resize((width,h(im)),scalingmethod)
@@ -276,7 +313,7 @@ def resize(im,width,height,left,right,up,down,scalingmethod=Image.NEAREST):  #th
     result = put(result,mm.resize((width-left-right,height-up-down),scalingmethod),left,up)
     result = put(result,mr.resize((w(mr),height-up-down),scalingmethod),width,up,"20")
     result = put(result,dl,0,height,"02")
-    result = put(result,dm.resize((width-left-right,h(dm)),Image.NEAREST),left,height,"02")
+    result = put(result,dm.resize((width-left-right,h(dm)),scalingmethod),left,height,"02")
     result = put(result,dr,width,height,"22")
     return result
 
@@ -348,6 +385,22 @@ def Create3_1Button(text,style=0,underline=False):
         Button = resize(Button,max(58,w(textgraphic)+6+6),h(textgraphic)+6+6,3,3,3,3)
         Button = put(Button,textgraphic,floor(w(Button)/2-w(textgraphic)/2-1),6,"00")
     return Button
+
+def CreateUbuntuButton(text,style=0,predefinedsize=[]):
+    styles = ["ubuntu/Button.png","ubuntu/Button Default.png"]
+    Button = Image.open(styles[style]).convert("RGBA")
+    if predefinedsize:
+        size = predefinedsize
+    else:
+        size = measuretext7(text,"ubuntu/fonts/text/")
+        size[0] += 16
+        size[1] += 10
+        size[0] = max(85,size[0])
+        size[1] = max(29,size[1])
+    Button = resize(Button,size[0],size[1],5,5,5,5,scalingmethod=Image.BICUBIC)
+    Button = createtextubuntu(Button, size[0]//2, size[1]//2, text, "ubuntu/fonts/text/",(60,59,55,255),align="11")
+    return Button
+
 def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
 
     if active:
@@ -826,7 +879,73 @@ def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
         IMAGE = put(IMAGE,TitleImg,floor((contentwidth-20-1)/2-w(TitleImg)/2)+19+6,6)
     return IMAGE
     #
-        
+
+def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=True):
+    contentwidth = 12+12+12
+    contentheight = 12+16+24
+    textwidth = 0
+    textheight = 0
+    if(bigtext != ""):
+        bigtextsize = measuretext7(bigtext,"ubuntu/fonts/bigtext/")
+        textwidth += bigtextsize[0]
+        textheight += bigtextsize[1]+12
+    if(text != ""):
+        textsize = measuretext7(text,"ubuntu/fonts/text/")
+        textwidth = max(textwidth,textsize[0])
+        textheight += textsize[1]
+    else:
+        textheight += 17
+    contentwidth += textwidth
+    contentheight = max(contentheight,textheight+12+24+16)
+    if(icon != ""):
+        IconImg = Image.open(icon).convert("RGBA")
+        contentwidth += w(IconImg)
+        contentheight = max(contentheight,h(IconImg)+12+24+16)
+    maxbuttonwidth = 0
+    maxbuttonheight = 0
+    for button in buttons:
+        ButtonImg = CreateUbuntuButton(button[0],button[1])
+        maxbuttonwidth = max(w(ButtonImg),maxbuttonwidth)
+        maxbuttonheight = max(h(ButtonImg),maxbuttonheight)
+    contentwidth = max(contentwidth, (maxbuttonwidth+4+4)*len(buttons)+8+8)
+    contentheight += maxbuttonheight
+    CONTENT = Image.new("RGBA",(contentwidth,contentheight),(240,235,226))
+    iconsize = 0
+    if(icon != ""):
+        CONTENT = put(CONTENT,IconImg,12,12)
+        iconsize = w(IconImg)
+    if(bigtext == ""):
+        if(text != ""):
+            CONTENT = createtextubuntu(CONTENT,iconsize+24,12,text,"ubuntu/fonts/text/",(60,59,55,255))
+    else:
+        CONTENT = createtextubuntu(CONTENT,iconsize+24,12,bigtext,"ubuntu/fonts/bigtext/",(60,59,55,255))
+        if(text != ""):
+            CONTENT = createtextubuntu(CONTENT,iconsize+24,bigtextsize[1]+12+12,text,"ubuntu/fonts/text/",(60,59,55,255))
+    buttonpos = contentwidth-12
+    for button in buttons:
+        CONTENT = put(CONTENT, CreateUbuntuButton(button[0],active and button[1] or 0,[maxbuttonwidth,maxbuttonheight]),buttonpos,contentheight-16,"22")
+        buttonpos -= maxbuttonwidth+8
+    
+    Frame = Image.open(active and "ubuntu/Window.png" or (not active and "ubuntu/Window Inactive.png")).convert("RGBA")
+    CloseButton = Image.open(active and "ubuntu/Close Button.png" or (not active and "ubuntu/Close Button Inactive.png")).convert("RGBA")
+    Mask = Image.open("ubuntu/Mask.png").convert("RGBA")
+    Highlight = Image.open("ubuntu/Highlight.png").convert("RGBA")
+    Mask = resize(Mask,contentwidth,contentheight,5,5,1,4)  
+    WINDOW = resize(Frame,contentwidth+1+1,contentheight+27+1,5,5,27,5)
+    WINDOW = put(WINDOW, ImageChops.multiply(Mask,CONTENT), 1, 27)
+    WINDOW = put(WINDOW, CloseButton, 10, 5)
+    WINDOW = put(WINDOW, Highlight,0,27)
+    WINDOW = put(WINDOW, Highlight,contentwidth+1,27)
+    if(title != ""):
+        WINDOW = createtextubuntu(WINDOW, 42, 6, title, "ubuntu/fonts/caption/", (51,51,51,255))
+        WINDOW = createtextubuntu(WINDOW, 42, 4, title, "ubuntu/fonts/caption/", (51,51,51,255))
+        WINDOW = createtextubuntu(WINDOW, 41, 5, title, "ubuntu/fonts/caption/", (51,51,51,255))
+        WINDOW = createtextubuntu(WINDOW, 43, 5, title, "ubuntu/fonts/caption/", (51,51,51,255))
+        WINDOW = createtextubuntu(WINDOW, 42, 5, title, "ubuntu/fonts/caption/", (223,216,200,255))
+    Shadow = Image.open("ubuntu/Shadow.png").convert("RGBA")
+    IMAGE = resize(Shadow,contentwidth+1+1+8+10,contentheight+27+1+8+10,20,20,21,21)
+    IMAGE = put(IMAGE,WINDOW,8,8)
+    return IMAGE
 # Example XP windows:
 #o = CreateXPWindow(0,0,"Notepad",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button2="No",button3="Cancel",button1style=4)
 
@@ -861,7 +980,10 @@ def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
 #o = Create3_1Window(text="The selected COM port is either not supported or is \nbeing used by another device.\n\nSelect another port",title="Terminal - Error",buttons=[["OK",1]])
 #o = Create3_1Window(icon="3.1//Information.png",text="Now 1.459854% more accurate!",title="The Create3_1Window function",buttons=[["OK",1]])
 #o = Create7Window(text="Error with no icon and buttons",title="Window title")
-o = Create3_1Window(icon="3.1//Question Mark.png",text="The component that you want to install requires \nMicrosoft Windows Network.\n\nDo you want to install Microsoft Workgroup \nNetwork now?",title="Remote Access",buttons=[["Yes",1,True],["No",0,True]],active=False)
+#o = Create3_1Window(icon="3.1//Question Mark.png",text="The component that you want to install requires \nMicrosoft Windows Network.\n\nDo you want to install Microsoft Workgroup \nNetwork now?",title="Remote Access",buttons=[["Yes",1,True],["No",0,True]],active=False)
+o = CreateUbuntuWindow(icon="ubuntu/Error.png",bigtext="Big text",text="Small text",buttons=[["OK",1],["Cancel",0]])
+#
+#
 #Export7Animation(o,"7//animoutput//")
 
 #o = Create3_1Button("OK",0)
