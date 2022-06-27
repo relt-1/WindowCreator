@@ -7,7 +7,7 @@ It will also be able to work as a python library for making crazy error videos.
 
 Example errors:
 
-![](https://i.imgur.com/3rkfdP8.png) (the black background is a github bug, the image has normal transparency)
+![](https://i.imgur.com/3rkfdP8.png)
 
 ![](https://i.imgur.com/WyQQpy2.png)
 
@@ -26,6 +26,7 @@ There are examples in the comments at the bottom, just uncomment any line and se
 * Windows XP
 * Mac OS 9
 * Windows 7
+* Windows 3.1
 
 # Todo:
 ## Windows XP
@@ -48,10 +49,11 @@ There are examples in the comments at the bottom, just uncomment any line and se
 * Add TaskDialog implementation
 * Inactive windows
 * Button pressing and interactions
+## Windows 3.1
+* Make the titlebar-less error (the one that is really big and appears in the center of the screen) 
 
 ## Future OS's
-* Windows 3.1
-* Ubuntu (not sure about the version yet)
+* Ubuntu (10.04 and a couple others)
 * Windows 95,98,2000
 * Windows Vista
 * Windows 8
