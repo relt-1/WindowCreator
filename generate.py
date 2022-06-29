@@ -606,24 +606,28 @@ def CreateMacAlertDialog(width,height,title="",bar=True,icon="",errortext="",sub
                     IMAGE = put(IMAGE,button3border,width-17+3-w(button2img)-22-w(button1img)-22,height-17+3,"22")
     return IMAGE
 
-def CreateMacWindow(width,height,title="",icon="",errortext="",subtext="",button1="",button2="",button3="",button1default=False,button2default=False,button3default=False,button1style=0,button2style=0,button3style=0):
+def CreateMacWindow(width,height,title="",icon="",errortext="",button1="",button2="",button3="",button1default=False,button2default=False,button3default=False,button1style=0,button2style=0,button3style=0):
     WindowBar = Image.open("mac/Window With bar.png").convert("RGBA")
     Ridges = Image.open("mac/Ridges.png").convert("RGBA")
     ButtonBorder = Image.open("mac//Button Outline.png").convert("RGBA")
     Paddingheight = 29+4
     TextHeight = 0
+    iconsize = 0
+    if(icon != ""):
+        IconImg = Image.open(icon).convert("RGBA")
+        iconsize = w(IconImg)+26
     if(errortext != ""):
         ErrorTextImg = createtextmac(errortext,"mac//fonts//caption//")
-        width = max(width,w(ErrorTextImg)+79+90)
+        width = max(width,w(ErrorTextImg)+iconsize+20+20)
         #height = max(height,h(ErrorTextImg)+Paddingheight+20)
-        TextHeight += h(ErrorTextImg)
-    if(subtext != ""):
-        SubTextImg = createtextmac(subtext,"mac//fonts//text//")
-        width = max(width,w(SubTextImg)+79+90)
-        TextHeight += h(SubTextImg)
-    height += TextHeight
+        TextHeight += h(ErrorTextImg)+36
+    #if(subtext != ""):
+    #    SubTextImg = createtextmac(subtext,"mac//fonts//text//")
+    #    width = max(width,w(SubTextImg)+79+90)
+    #    TextHeight += h(SubTextImg)
+    height += TextHeight+24+4
     if(button1 != ""):
-        height += 80
+        height += 17+17
     IMAGE = Image.new("RGBA", (width,height), (236,233,216,0))
     IMAGE = put(IMAGE,resize(WindowBar,width,height,3,4,24,4),0,0)
     if(title == ""):
@@ -634,10 +638,9 @@ def CreateMacWindow(width,height,title="",icon="",errortext="",subtext="",button
         IMAGE = put(IMAGE,resizeanchor(Ridges,5,4,width//2-w(TitleImage)//2-3,16,1,1,1,1),5,4)
         IMAGE = put(IMAGE,resizeanchor(Ridges,width//2+w(TitleImage)//2+5,4,width-6,16,1,1,1,1),width//2+w(TitleImage)//2+5,4)
     if(icon != ""):
-        IconImg = Image.open(icon).convert("RGBA")
         IMAGE = put(IMAGE,IconImg,26,37)
     if(errortext != ""):
-        IMAGE = put(IMAGE,ErrorTextImg,79,36)
+        IMAGE = put(IMAGE,ErrorTextImg,iconsize+20,36)
     if(button1 != ""):
         button1img = CreateMacButton(button1,button1style)
         IMAGE = put(IMAGE,button1img,width-17,height-17,"22")
@@ -1111,7 +1114,8 @@ def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=Tru
 #o = CreateUbuntuWindow(icon="ubuntu/Error.png",bigtext="Big text",text="Small text",title="title(dont use this)",buttons=[["OK",1],["Cancel",0]])
 #
 #
-o = Create7TaskDialog(icon="7/Exclamation.png",textbig="An error has occured",textsmall="That's all we know.",buttons=[["Close",4],["Help",0]],title="Windows",closebutton=False)
+#o = Create7TaskDialog(icon="7/Exclamation.png",textbig="An error has occured",textsmall="That's all we know.",buttons=[["Close",4],["Help",0]],title="Windows",closebutton=False)
+o=CreateMacWindow(0,0,icon="mac/Exclamation.png",errortext="This is named 'errortext'",button1="guh")
 
 #Export7Animation(o,"7//animoutput//")
 
