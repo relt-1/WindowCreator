@@ -55,7 +55,7 @@ There are examples in the comments at the bottom, just uncomment any line and se
 * 🔴 Make the titlebar-less error (the one that is really big and appears in the center of the screen) 
 
 ## Future OS's
-* 🟢Ubuntu (10.04 and a couple others)
+* 🟢 Ubuntu (10.04 and a couple others)
 * 🔴 Windows 95,98,2000
 * 🔴 Windows Vista
 * 🔴 Windows 8
