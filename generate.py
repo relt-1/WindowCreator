@@ -179,7 +179,7 @@ def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),u
         width = max(width,cursorpos)
         height = max(height,h(char))
     return drawntext.crop((0,0,width,height))
-def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00", kerningadjust=0):
+def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00", kerningadjust=0, fit=9999999):
     drawntext = Image.new("RGBA",buffersize,(255,255,0,0))
     whitedrawntext = Image.new("RGBA",buffersize,(0,0,255,0))
     width = 0
@@ -196,6 +196,11 @@ def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,10
             cursorpos = 0
             continue
         char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+        if(cursorpos+w(char)+kerningadjust > fit):
+            height += newlinesize
+            line += newlinesize
+            cursorpos = 0
+            continue
         whitechar = Image.open(fontdirectory+"white"+str(ord(i))+".png").convert("RGBA")
         #colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
         #char = ImageChops.multiply(char,colorimg)
@@ -226,8 +231,8 @@ def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,10
     result = Image.merge("RGBA",(red,green,blue,alpha))
     return result
 
-def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0): #this gives width and height of text using windows 7 rendering
-    drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
+def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0, fit=9999999): #this gives width and height of text using windows 7 rendering
+    #drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
     line = 0
@@ -242,9 +247,14 @@ def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0): #
             cursorpos = 0
             continue
         char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+        if(cursorpos+w(char)+kerningadjust > fit):
+            height += newlinesize
+            line += newlinesize
+            cursorpos = 0
+            continue
         #colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
         #char = ImageChops.multiply(char,colorimg)
-        drawntext.paste(char,(cursorpos,line))
+        #drawntext.paste(char,(cursorpos,line))
         cursorpos +=w(char)+kerningadjust
         width = max(width,cursorpos)
         height = max(height,h(char))
@@ -364,6 +374,18 @@ def Create7Button(text,style=0):
     textsize = measuretext7(text,"7\\fonts\\text\\",kerningadjust=-1)
     Button = resize(Button,max(textsize[0]+16,86),max(24,textsize[1]+9),3,3,3,3,Image.NEAREST)
     Button = createtext7(Button,w(Button)//2-textsize[0]//2,4,text,"7\\fonts\\text\\",kerningadjust=-1)
+    return Button
+
+def Create7TaskDialogButton(text,style=0):
+    styles = ["7/Button.png","","","7/Button Disabled.png","7/Button Defaulted.png","7/Button Defaulted Animation.png"]
+    Button = Image.open(styles[style]).convert("RGBA")
+    col = (0,0,0,255)
+    #if(style==3):
+    #    col = (161,161,146,255)
+    #textgraphic = createtext(text,".\\7\\fonts\\text\\",col)
+    textsize = measuretext7(text,"7\\fonts\\text\\",kerningadjust=-1)
+    Button = resize(Button,max(textsize[0]+30,66),max(21,textsize[1]+6),3,3,3,3,Image.NEAREST)
+    Button = createtext7(Button,w(Button)//2-textsize[0]//2,3,text,"7\\fonts\\text\\",kerningadjust=-1)
     return Button
 
 def Create3_1Button(text,style=0,underline=False):
@@ -787,6 +809,111 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
         WallpaperImg = Image.open(wallpaper).convert("RGBA")
         IMAGE = put(WallpaperImg, IMAGE, pos[0]-13, pos[1]-12)
     return IMAGE
+
+"""def Create7ButtonPanel(buttons,windowwidth=360,screenres=(1920,1080)):
+    summedwidth = 11
+    summedheight = 20
+    curwidth = 0
+    curlevel = 0
+    cachedbuttons = []
+    for button in buttons:
+        button = Create7Button(button[0],button[1])
+        cachedbuttons.append(button)
+        size = button.size
+        if(curwidth + size[0] > screenres[0]):
+            summedheight += curlevel+2
+            curwidth = 0
+            curlevel = 0
+        curwidth += size[0]
+        summedwidth= max(summedwidth,curwidth)
+        curlevel = max(curlevel,size[1])
+    summedheight += curlevel
+    
+    for button in cachedbuttons:
+        size = button.size""" #tbd
+        
+def Create7TaskDialog(icon="",textbig="",textsmall="",title="",buttons=[],closebutton=True,pos=(200,100),screenres=(1920,1080),wallpaper=""):
+    width = 360
+    height = 0
+    iconsize = 0
+    if(title != ""):
+        TitleDim = measuretext7(title,"7//fonts//text//",kerningadjust=-1)
+    if(icon != ""):
+        IconImg = Image.open(icon).convert("RGBA")
+        iconsize = w(IconImg)+10
+        height += iconsize+10
+    textbigheight = 0
+    if(textbig != ""):
+        textbigheight = measuretext7(textbig,"7/fonts/bigtext/",fit=width-iconsize-10-10)[1]+10
+        height = max(height,textbigheight+10+30)
+    if(textsmall != ""):
+        height = max(height,measuretext7(textsmall,"7/fonts/text/",fit=width-iconsize-10-10)[1]+15+15)
+    if buttons:
+        height += 41
+    CONTENT = Image.new("RGBA",(width,height),(255,255,255,255))
+    if(icon != ""):
+        CONTENT = put(CONTENT,IconImg,10,10)
+    
+    if(textbig != ""):
+        CONTENT = createtext7(CONTENT,iconsize+10,10,textbig,"7/fonts/bigtext/",(0,51,153,255),kerningadjust=-1,fit=width-iconsize-10-10)
+    if(textsmall != ""):
+        CONTENT = createtext7(CONTENT,iconsize+10,textbigheight+15,textsmall,"7/fonts/text/",kerningadjust=-1,fit=width-iconsize-10-10)
+    if buttons:
+        CONTENT = put(CONTENT, Image.new("RGBA",(width,40),(240,240,240,255)),0,height,"02")
+        CONTENT = put(CONTENT, Image.new("RGBA",(width,1),(222,222,222,255)),0,height-41)
+    buttonpos = 12
+    for button in buttons:
+        ButtonImg = Create7TaskDialogButton(button[0],button[1])
+        CONTENT = put(CONTENT, ButtonImg, width-buttonpos,height-11,"22")
+        buttonpos += w(ButtonImg)+8
+
+
+
+        
+    Window = Image.open("7//Window.png").convert("RGBA")
+    CloseButton = Image.open("7//Close Button Single.png").convert("RGBA")
+    CloseSymbol = Image.open("7//Close Symbol.png").convert("RGBA")
+    GlassImg = Image.open("7//Glass.png").convert("RGBA")
+    GlassMask = Image.open("7//Glass Mask.png").convert("RGBA")
+    TextGlow = Image.open("7//Text Glow.png").convert("RGBA")
+    SideGlowLeft = Image.open("7//Sideglow 1 Left.png").convert("RGBA")
+    SideGlowRight = Image.open("7//Sideglow 1 Right.png").convert("RGBA")
+    SideShine = Image.open("7//Side Shine.png").convert("RGBA")
+    width = width+8+8
+    height = height+8+30
+    GlassMask = resize(GlassMask,width,height,8,8,30,8)
+    #Glass = put(Image.new("RGBA",(800,602),(0,0,0,0)),GlassImg.resize(screenres),int((width/screenres[0])*50-50-pos[0]+pos[0]*0.12173472694),0)
+    Glass = put(Image.new("RGBA",(800,602),(0,0,0,0)),GlassImg.resize(screenres),int(-pos[0]+width/16-screenres[0]/16+pos[0]/8),-pos[1])
+    WithBorder = ImageChops.multiply(GlassMask,Glass)
+    WithBorder = put(WithBorder, SideGlowLeft, 0, 0)
+    WithBorder = put(WithBorder, SideGlowRight, width, 0, "20")
+    WithBorder = put(WithBorder, SideShine.resize((w(SideShine),(height-29-8)//4)), 0, 29)
+    WithBorder = put(WithBorder, SideShine.resize((w(SideShine),(height-29-8)//4)), width, 29, "20")
+    #WithBorder.show()
+    if(title != ""):
+        WithBorder = put(WithBorder,resize(TextGlow,TitleDim[0]+7+14+10,h(TextGlow),23,23,1,1),-7,0)
+        WithBorder = createtext7(WithBorder,8,7,title,"7//fonts//text//",kerningadjust=-1)
+    
+    WithBorder = put(WithBorder,resize(Window,width,height,8,8,30,8),0,0)
+    WithBorder = put(WithBorder,CONTENT,8,30)
+    if closebutton:
+        WithBorder = put(WithBorder,CloseButton,width-6,1,"20")
+        WithBorder = put(WithBorder,CloseSymbol,width-6-18,5,"20")
+    ShadowTop = Image.open("7//Shadow Top.png")
+    ShadowRight = Image.open("7//Shadow Right.png")
+    ShadowBottom = Image.open("7//Shadow Bottom.png")
+    ShadowLeft = Image.open("7//Shadow Left.png")
+    IMAGE = Image.new("RGBA",(width+19+13,height+18+12),(0,0,0,0))
+    IMAGE = put(IMAGE, resize(ShadowTop,width+13+16,12,26,26,1,1),0,0)
+    IMAGE = put(IMAGE, resize(ShadowLeft,13,height,1,1,20,14),0,12)
+    IMAGE = put(IMAGE, resize(ShadowRight,19,height,1,1,20,14),width+13,12)
+    IMAGE = put(IMAGE, resize(ShadowBottom,width+13+17,18,28,27,1,1),0,height+12)
+    IMAGE = put(IMAGE,WithBorder,13,12)
+    if(wallpaper != ""):
+        WallpaperImg = Image.open(wallpaper).convert("RGBA")
+        IMAGE = put(WallpaperImg, IMAGE, pos[0]-13, pos[1]-12)
+    return IMAGE
+
 def Export7Animation(img,savepath):  #just put the generated window into img and set savepath to the folder you want it to save  "7//animoutput//" is recommended
     for i in range(16):
         ImageChops.multiply(ImageOps.deform(img, Windows7Anim(i/60)),Image.new("RGBA",(w(img),h(img)),(255,255,255,int(max(0,min(1,(i+0.1)/15))**0.5*255)))).save(savepath+str(i)+".png")
@@ -981,9 +1108,11 @@ def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=Tru
 #o = Create3_1Window(icon="3.1//Information.png",text="Now 1.459854% more accurate!",title="The Create3_1Window function",buttons=[["OK",1]])
 #o = Create7Window(text="Error with no icon and buttons",title="Window title")
 #o = Create3_1Window(icon="3.1//Question Mark.png",text="The component that you want to install requires \nMicrosoft Windows Network.\n\nDo you want to install Microsoft Workgroup \nNetwork now?",title="Remote Access",buttons=[["Yes",1,True],["No",0,True]],active=False)
-o = CreateUbuntuWindow(icon="ubuntu/Error.png",bigtext="Big text",text="Small text",buttons=[["OK",1],["Cancel",0]])
+#o = CreateUbuntuWindow(icon="ubuntu/Error.png",bigtext="Big text",text="Small text",title="title(dont use this)",buttons=[["OK",1],["Cancel",0]])
 #
 #
+o = Create7TaskDialog(icon="7/Exclamation.png",textbig="An error has occured",textsmall="That's all we know.",buttons=[["Close",4],["Help",0]],title="Windows",closebutton=False)
+
 #Export7Animation(o,"7//animoutput//")
 
 #o = Create3_1Button("OK",0)
