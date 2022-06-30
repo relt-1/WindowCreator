@@ -1,93 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Window Creator</title>
+		<link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+		<script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+        <style>
+        input,select,button {
+        border: 1px solid black;
+        border-radius: 3px;
+        
+        }
+        </style>
+	</head>
+	<body>
+	<select id="os">
+		<option selected>Windows XP</option>
+		<option>Windows 7</option>
+	</select>
+    <p>title:</p>
+    <input id="title" type="text" value="">
+    <p>text:</p>
+	<input id="text" type="text" value="">
+    <p>icon: </p>
+    <select id="icon">
+		<option value="xp/Exclamation.png",selected>Exclamation</option>
+		<option value="xp/Critical Error.png",>Critical Error</option>
+        <option value="xp/Information.png",>Information</option>
+        <option value="xp/Question Mark.png",>Question Mark</option>
+	</select>
+    <p>button 1:</p>
+    <input id="button1" type="text" value="OK"> <input id="button1style" type="number" min="0" max="4">
+    <p>button 2:</p>
+    <input id="button2" type="text" value=""> <input id="button2style" type="number" min="0" max="4">
+    <p>button 3:</p>
+    <input id="button3" type="text" value=""> <input id="button3style" type="number" min="0" max="4">
+    <p>active: </p>
+    <input id="active" type="checkbox" checked>
+    <br />
+    <button id="generate"> Generate! </button>
+	<canvas id="output"></canvas>
+<py-env>
+- numpy
+- Pillow
+
+</py-env>
+
+<py-script>
+from js import console, document, ImageData, Uint8ClampedArray, CanvasRenderingContext2D as Context2d, requestAnimationFrame
+#import generate
+from pyodide import to_js, create_proxy
+from pyodide.http import pyfetch
+from numpy import *
 from PIL import Image, ImageFont, ImageDraw, ImageMath,ImageChops, ImageOps
 from math import ceil,floor
+import asyncio
 
-
-
-#_IMAGE = Image.new("RGBA", (200,100), (255,255,255,255))
-
-#  the put() command pastes an image onto a canvas where the given x,y coordinates dictate where the (0,0) point of the image should go.
-#  alignment is a 2 character string that holds two numbers ranging from 0 to 2 (inclusive)
-#  it dictates what point on the image should be (0,0) and put exactly where the coordinates given say
-#
-#     "00"--------"10"--------"20"
-#      |           |            |
-#      |           |            |
-#      |           |            |
-#     "01"--------"11"--------"21"
-#      |           |            |
-#      |           |            |
-#      |           |            |
-#     "02"--------"12"--------"22"
-#
-#   here is a diagram showing a rectangular image and its alignment points
-#   if we chose "11" as the alignment point, it would become the (0,0) of the image. and if the x,y coordinates were width/2,height/2 of the canvas, the image would be put exactly in the center of the canvas
-#   this would not work if the alignment point would be "00"
-#
-#
-#     +-----------------------------------CANVAS-----------------------------------+
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                    "00"---IMAGE----+                       |       using "00"(default) as the alignment point
-#     |                                     |              |                       |
-#     |                                     |              |                       |
-#     |                                     |              |                       |
-#     |                                     |              |                       |
-#     |                                     |              |                       |
-#     |                                     +--------------+                       |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     +----------------------------------------------------------------------------+
-#
-#
-#
-#
-#
-#
-#     +-----------------------------------CANVAS-----------------------------------+
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                              +----IMAGE-----+                              |
-#     |                              |              |                              |
-#     |                              |              |                              |
-#     |                              |     "11"     |                              |       using "11" as the alignment point
-#     |                              |              |                              |
-#     |                              |              |                              |
-#     |                              +--------------+                              |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     |                                                                            |
-#     +----------------------------------------------------------------------------+
-#
-#     notice how the alignment point stays in the same place on the canvas, but the whole image doesnt.
-#
-#
+async def imageopenGETBYTES(text):
+    text = text.replace("\\","/")
+    text = text.replace("//","/")
+    text = text.replace("./","")
+    url = f"https://raw.githubusercontent.com/relt-1/WindowCreator/main/{text}"
+    response = await pyfetch(url)
+    if response.status == 200:
+        return await response.bytes()
+async def imageopenWEB(text):
+    bytes_list = bytearray(await imageopenGETBYTES(text))
+    bytes = io.BytesIO(bytes_list) 
+    image = Image.open(bytes).convert("RGBA")
+    return image
 def put(canvas, image,a,b,alignment="00"):
     canvas.alpha_composite(image,(int(a)-( image.size[0] * int(alignment[0]) // 2 ),int(b)-( image.size[1] * int(alignment[1]) // 2) ) )
     return canvas
@@ -101,7 +82,7 @@ def put7(canvas, image, a, b, alignment = "00"):  #this is the same as put(), bu
     b = ImageMath.eval("convert(  c+(b*(255-a)/255) ,'L')",c=ib,b=cb,a=ia)
     canvas.paste(Image.merge("RGBA",(r,g,b,ca)),(x,y))
     return canvas
-#def ApplyRules(rules,width,height,
+#async def ApplyRules(rules,width,height,
 def h(img):  #get the height
     return img.size[1]
 def w(img):  #get the width
@@ -111,23 +92,21 @@ def cropx(img,a,b):  #crop but only x
 def cropy(img,a,b):  #crop but only y
     return img.crop((0,a,x(img),b))
 
-def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(1000,1000)):
+async def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(1000,1000)):
     drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
     line = 0
     cursorpos = 0
-    newlinesizefile = open(fontdirectory+"newlinesize.txt")
-    newlinesize = int(newlinesizefile.read())
-    newlinesizefile.close()
+    newlinesize = int(await imageopenGETBYTES(fontdirectory+"newlinesize.txt"))
     for i in text:
         if(i=="\n"):
             height += newlinesize
             line += newlinesize
             cursorpos = 0
             continue
-        char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
-        whitechar = Image.open(fontdirectory+"white"+str(ord(i))+".png").convert("RGBA")
+        char = await imageopenWEB(fontdirectory+str(ord(i))+".png")
+        whitechar = await imageopenWEB(fontdirectory+"white"+str(ord(i))+".png")
         cred, cgreen, wcblue, calpha = char.split()
         wcred, wcgreen, cblue, wcalpha = whitechar.split()
         alpha2 = ImageMath.eval("convert( int( (r1-r2+255+g1-g2+255+b1-b2+255)/3*alp/255 ), 'L')",r1 = cred,r2 = wcred,b1 = cblue,b2 = wcblue,g1 = cgreen,g2 = wcgreen, alp = (color[3]))
@@ -140,15 +119,13 @@ def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(1000,1000
         width = max(width,cursorpos)
         height = max(height,h(char))
     return drawntext.crop((0,0,width,height))
-def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),underline=False):
+async def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),underline=False):
     drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
     line = 0
     cursorpos = 0
-    newlinesizefile = open(fontdirectory+"newlinesize.txt")
-    newlinesize = int(newlinesizefile.read())
-    newlinesizefile.close()
+    newlinesize = int(await imageopenGETBYTES(fontdirectory+"newlinesize.txt"))
     if(underline):
         i = text[0]
         if(i=="\n"):
@@ -156,7 +133,7 @@ def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),u
             line += newlinesize
             cursorpos = 0
         else:
-            char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+            char = await imageopenWEB(fontdirectory+str(ord(i))+".png")
             char = put(char, Image.new("RGBA",(w(char),1),(255,255,255,255)),0,h(char)-2)
             colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
             char = ImageChops.multiply(char,colorimg)
@@ -171,7 +148,7 @@ def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),u
             line += newlinesize
             cursorpos = 0
             continue
-        char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+        char = await imageopenWEB(fontdirectory+str(ord(i))+".png")
         colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
         char = ImageChops.multiply(char,colorimg)
         drawntext.paste(char,(cursorpos,line))
@@ -179,29 +156,27 @@ def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),u
         width = max(width,cursorpos)
         height = max(height,h(char))
     return drawntext.crop((0,0,width,height))
-def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00", kerningadjust=0, fit=9999999):
+async def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00", kerningadjust=0, fit=9999999):
     drawntext = Image.new("RGBA",buffersize,(255,255,0,0))
     whitedrawntext = Image.new("RGBA",buffersize,(0,0,255,0))
     width = 0
     height = 0
     line = 0
     cursorpos = 0
-    newlinesizefile = open(fontdirectory+"newlinesize.txt")
-    newlinesize = int(newlinesizefile.read())
-    newlinesizefile.close()
+    newlinesize = int(await imageopenGETBYTES(fontdirectory+"newlinesize.txt"))
     for i in text:
         if(i=="\n"):
             height += newlinesize
             line += newlinesize
             cursorpos = 0
             continue
-        char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+        char = await imageopenWEB(fontdirectory+str(ord(i))+".png")
         if(cursorpos+w(char)+kerningadjust > fit):
             height += newlinesize
             line += newlinesize
             cursorpos = 0
             continue
-        whitechar = Image.open(fontdirectory+"white"+str(ord(i))+".png").convert("RGBA")
+        whitechar = await imageopenWEB(fontdirectory+"white"+str(ord(i))+".png")
         #colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
         #char = ImageChops.multiply(char,colorimg)
         drawntext.paste(char,(cursorpos,line))
@@ -231,22 +206,20 @@ def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,10
     result = Image.merge("RGBA",(red,green,blue,alpha))
     return result
 
-def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0, fit=9999999): #this gives width and height of text using windows 7 rendering
+async def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0, fit=9999999): #this gives width and height of text using windows 7 rendering
     #drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
     line = 0
     cursorpos = 0
-    newlinesizefile = open(fontdirectory+"newlinesize.txt")
-    newlinesize = int(newlinesizefile.read())
-    newlinesizefile.close()
+    newlinesize = int(await imageopenGETBYTES(fontdirectory+"newlinesize.txt"))
     for i in text:
         if(i=="\n"):
             height += newlinesize
             line += newlinesize
             cursorpos = 0
             continue
-        char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+        char = await imageopenWEB(fontdirectory+str(ord(i))+".png")
         if(cursorpos+w(char)+kerningadjust > fit):
             height += newlinesize
             line += newlinesize
@@ -260,22 +233,20 @@ def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0, fi
         height = max(height,h(char))
     return [width,height]
 
-def createtextubuntu(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00"):
+async def createtextubuntu(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00"):
     drawntext = Image.new("RGBA",buffersize,(255,255,0,0))
     width = 0
     height = 0
     line = 0
     cursorpos = 0
-    newlinesizefile = open(fontdirectory+"newlinesize.txt")
-    newlinesize = int(newlinesizefile.read())
-    newlinesizefile.close()
+    newlinesize = int(await imageopenGETBYTES(fontdirectory+"newlinesize.txt"))
     for i in text:
         if(i=="\n"):
             height += newlinesize
             line += newlinesize
             cursorpos = 0
             continue
-        char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
+        char = await imageopenWEB(fontdirectory+str(ord(i))+".png")
         #colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
         #char = ImageChops.multiply(char,colorimg)
         drawntext.paste(char,(cursorpos,line))
@@ -327,10 +298,10 @@ def resize(im,width,height,left,right,up,down,scalingmethod=Image.NEAREST):  #th
     result = put(result,dr,width,height,"22")
     return result
 
-def resizeanchor(im,x1,y1,x2,y2,left,right,up,down,scalingmethod=Image.NEAREST):  #this is resize, but you give it desired coordinates and it calculates the size the image should be
+async def resizeanchor(im,x1,y1,x2,y2,left,right,up,down,scalingmethod=Image.NEAREST):  #this is resize, but you give it desired coordinates and it calculates the size the image should be
     return resize(im,x2-x1,y2-y1,left,right,up,down,scalingmethod)
 
-def tile(im,width,height):    #this tiles an image
+async def tile(im,width,height):    #this tiles an image
     result = Image.new("RGBA",(width,height),(0,0,0,0))
     for x in range(ceil(width/w(im))):
         for y in range(ceil(height/h(im))):
@@ -339,62 +310,62 @@ def tile(im,width,height):    #this tiles an image
 
 #the button functions return an image of a button for the OS.
 
-def CreateXPButton(text,style=0):
+async def CreateXPButton(text,style=0):
     styles = ["xp/Button.png","xp/Button Hovered.png","xp/Button Clicked.png","xp/Button Disabled.png","xp/Button Default.png"]
-    Button = Image.open(styles[style]).convert("RGBA")
+    Button = await imageopenWEB(styles[style])
     col = (0,0,0,255)
     if(style==3):
         col = (161,161,146,255)
-    textgraphic = createtext(text,".\\xp\\fonts\\text\\",col)
+    textgraphic = await createtext(text,".\\xp\\fonts\\text\\",col)
     Button = resize(Button,max(w(textgraphic)+16,75),max(23,h(textgraphic)+10),8,8,9,9,Image.NEAREST)
     Button = put(Button,textgraphic,w(Button)//2-w(textgraphic)//2,5)
     return Button
 
-def CreateMacButton(text,style=0):
+async def CreateMacButton(text,style=0):
     styles = ["mac/Button.png","mac/Button Disabled.png"]
-    Button = Image.open(styles[style]).convert("RGBA")
+    Button = await imageopenWEB(styles[style])
     col = (0,0,0,255)
     if(style==1):
         col = (161,161,146,255)
-        textgraphic = createtextmac(text,".\\mac\\fonts\\caption\\",col)
+        textgraphic = await createtextmac(text,".\\mac\\fonts\\caption\\",col)
         Button = resize(Button,max(w(textgraphic)+10,60),max(20,h(textgraphic)+4),2,2,2,2,Image.NEAREST)
     else:
-        textgraphic = createtextmac(text,".\\mac\\fonts\\caption\\",col)
+        textgraphic = await createtextmac(text,".\\mac\\fonts\\caption\\",col)
         Button = resize(Button,max(w(textgraphic)+10,60),max(20,h(textgraphic)+4),4,4,4,4,Image.NEAREST)
     Button = put(Button,textgraphic,floor(w(Button)/2-w(textgraphic)/2),2)
     return Button
 
-def Create7Button(text,style=0):
+async def Create7Button(text,style=0):
     styles = ["7/Button.png","","","7/Button Disabled.png","7/Button Defaulted.png","7/Button Defaulted Animation.png"]
-    Button = Image.open(styles[style]).convert("RGBA")
+    Button = await imageopenWEB(styles[style])
     col = (0,0,0,255)
     #if(style==3):
     #    col = (161,161,146,255)
-    #textgraphic = createtext(text,".\\7\\fonts\\text\\",col)
+    #textgraphic = await createtext(text,".\\7\\fonts\\text\\",col)
     textsize = measuretext7(text,"7\\fonts\\text\\",kerningadjust=-1)
     Button = resize(Button,max(textsize[0]+16,86),max(24,textsize[1]+9),3,3,3,3,Image.NEAREST)
-    Button = createtext7(Button,w(Button)//2-textsize[0]//2,4,text,"7\\fonts\\text\\",kerningadjust=-1)
+    Button = await createtext7(Button,w(Button)//2-textsize[0]//2,4,text,"7\\fonts\\text\\",kerningadjust=-1)
     return Button
 
-def Create7TaskDialogButton(text,style=0):
+async def Create7TaskDialogButton(text,style=0):
     styles = ["7/Button.png","","","7/Button Disabled.png","7/Button Defaulted.png","7/Button Defaulted Animation.png"]
-    Button = Image.open(styles[style]).convert("RGBA")
+    Button = await imageopenWEB(styles[style])
     col = (0,0,0,255)
     #if(style==3):
     #    col = (161,161,146,255)
-    #textgraphic = createtext(text,".\\7\\fonts\\text\\",col)
+    #textgraphic = await createtext(text,".\\7\\fonts\\text\\",col)
     textsize = measuretext7(text,"7\\fonts\\text\\",kerningadjust=-1)
     Button = resize(Button,max(textsize[0]+30,66),max(21,textsize[1]+6),3,3,3,3,Image.NEAREST)
-    Button = createtext7(Button,w(Button)//2-textsize[0]//2,3,text,"7\\fonts\\text\\",kerningadjust=-1)
+    Button = await createtext7(Button,w(Button)//2-textsize[0]//2,3,text,"7\\fonts\\text\\",kerningadjust=-1)
     return Button
 
-def Create3_1Button(text,style=0,underline=False):
+async def Create3_1Button(text,style=0,underline=False):
     styles = ["3.1/Button.png","3.1/Button Default.png"]
-    Button = Image.open(styles[style]).convert("RGBA")
-    textgraphic = createtextmac(text,"3.1//fonts//text//",underline=underline)
+    Button = await imageopenWEB(styles[style])
+    textgraphic = await createtextmac(text,"3.1//fonts//text//",underline=underline)
     if style == 1:
         Button = resize(Button,max(58,w(textgraphic)+5+5),h(textgraphic)+6+6,4,4,4,4)
-        Border = Image.open("3.1//Button Text Outline.png").convert("RGBA")
+        Border = await imageopenWEB("3.1//Button Text Outline.png")
         BorderImg = tile(Border,max(58,w(textgraphic)+5+5),h(textgraphic)+6+6)
         textx = floor(w(Button)/2-w(textgraphic)/2-1)
         textendx = textx+w(textgraphic)
@@ -408,9 +379,9 @@ def Create3_1Button(text,style=0,underline=False):
         Button = put(Button,textgraphic,floor(w(Button)/2-w(textgraphic)/2-1),6,"00")
     return Button
 
-def CreateUbuntuButton(text,style=0,predefinedsize=[]):
+async def CreateUbuntuButton(text,style=0,predefinedsize=[]):
     styles = ["ubuntu/Button.png","ubuntu/Button Default.png"]
-    Button = Image.open(styles[style]).convert("RGBA")
+    Button = await imageopenWEB(styles[style])
     if predefinedsize:
         size = predefinedsize
     else:
@@ -420,42 +391,43 @@ def CreateUbuntuButton(text,style=0,predefinedsize=[]):
         size[0] = max(85,size[0])
         size[1] = max(29,size[1])
     Button = resize(Button,size[0],size[1],5,5,5,5,scalingmethod=Image.BICUBIC)
-    Button = createtextubuntu(Button, size[0]//2, size[1]//2, text, "ubuntu/fonts/text/",(60,59,55,255),align="11")
+    Button = await createtextubuntu(Button, size[0]//2, size[1]//2, text, "ubuntu/fonts/text/",(60,59,55,255),align="11")
     return Button
 
-def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
-
+async def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
+    #brug = open("./brug.txt")
+    #print(brug.read())
     if active:
-        TopFrame = Image.open("xp/Frame Up Active.png").convert("RGBA")
-        LeftFrame = Image.open("xp/Frame Left Active.png").convert("RGBA")
-        RightFrame = Image.open("xp/Frame Right Active.png").convert("RGBA")
-        BottomFrame = Image.open("xp/Frame Bottom Active.png").convert("RGBA")
-        CloseButton = Image.open("xp/Close button.png").convert("RGBA")
+        TopFrame = await imageopenWEB("./xp/Frame Up Active.png")
+        LeftFrame = await imageopenWEB("./xp/Frame Left Active.png")
+        RightFrame = await imageopenWEB("./xp/Frame Right Active.png")
+        BottomFrame = await imageopenWEB("./xp/Frame Bottom Active.png")
+        CloseButton = await imageopenWEB("./xp/Close button.png")
     else:
-        TopFrame = Image.open("xp/Frame Up Inactive.png").convert("RGBA")
-        LeftFrame = Image.open("xp/Frame Left Inactive.png").convert("RGBA")
-        RightFrame = Image.open("xp/Frame Right Inactive.png").convert("RGBA")
-        BottomFrame = Image.open("xp/Frame Bottom Inactive.png").convert("RGBA")
-        CloseButton = Image.open("xp/Close button Inactive.png").convert("RGBA")
+        TopFrame = await imageopenWEB("./xp/Frame Up Inactive.png")
+        LeftFrame = await imageopenWEB("./xp/Frame Left Inactive.png")
+        RightFrame = await imageopenWEB("./xp/Frame Right Inactive.png")
+        BottomFrame = await imageopenWEB("./xp/Frame Bottom Inactive.png")
+        CloseButton = await imageopenWEB("./xp/Close button Inactive.png")
         button1style = button1style*(button1style != 4)
         button2style = button2style*(button2style != 4) 
         button3style = button3style*(button3style != 4)
     textposx = 15+3
     textposy = 11+h(TopFrame)
     
-    captiontextwidth = w(createtext(captiontext,".\\xp\\fonts\\caption\\"))
+    captiontextwidth = w(await createtext(captiontext,".\\xp\\fonts\\caption\\"))
     width = max(width,captiontextwidth+43)
-    createdtext = createtext(errortext,".\\xp\\fonts\\text\\",(0,0,0,255))
+    createdtext = await createtext(errortext,".\\xp\\fonts\\text\\",(0,0,0,255))
     #textposy -= min(15,h(createdtext)//2)
     width = max(width,w(createdtext)+textposx+8+3)
     height = max(height,h(createdtext)+h(TopFrame)+3+25)
     print(textposy)
     if(insideimagepath != ""):
-        insideimage = Image.open(insideimagepath).convert("RGBA")
+        insideimage = await imageopenWEB(insideimagepath)
         height = max(h(insideimage)+h(TopFrame)+3,height)
         width = max(width,w(insideimage)+6)
     if(erroriconpath != ""):
-        erroricon = Image.open(erroriconpath).convert("RGBA")
+        erroricon = await imageopenWEB(erroriconpath)
         textposx += 15+w(erroricon)
         textposy = max(textposy,11+floor(h(erroricon)/2-h(createdtext)/2)+h(TopFrame))
         height = max(height,h(erroricon)+h(TopFrame)+3+11+11+3)
@@ -467,7 +439,7 @@ def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",
     if button1 != "":
         buttonswidth += 11
         
-        button1img = CreateXPButton(button1,button1style)
+        button1img = await CreateXPButton(button1,button1style)
         #IMAGE = put(IMAGE,button1img,3+12,height-3-12,"02")
         buttonsheight = max(buttonsheight,h(button1img)+14)
         temp = Image.new("RGBA",(buttonswidth+w(button1img),buttonsheight),(0,0,0,0))
@@ -477,7 +449,7 @@ def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",
         buttonswidth += w(button1img)
         if button2 != "":
             buttonswidth += 6
-            button2img = CreateXPButton(button2,button2style)
+            button2img = await CreateXPButton(button2,button2style)
             #IMAGE = put(IMAGE,button2img,3+12,height-3-12,"02")
             buttonsheight = max(buttonsheight,h(button2img)+14)
             temp = Image.new("RGBA",(buttonswidth+w(button2img),buttonsheight),(0,0,0,0))
@@ -487,7 +459,7 @@ def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",
             buttonswidth += w(button2img)
             if button3 != "":
                 buttonswidth += 6
-                button3img = CreateXPButton(button3,button3style)
+                button3img = await CreateXPButton(button3,button3style)
                 #IMAGE = put(IMAGE,button2img,3+12,height-3-12,"02")
                 buttonsheight = max(buttonsheight,h(button3img)+14)
                 temp = Image.new("RGBA",(buttonswidth+w(button3img),buttonsheight),(0,0,0,0))
@@ -513,23 +485,23 @@ def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",
     IMAGE = put(IMAGE,Image.new("RGBA", (width-6,height-3-h(TopFrame)), (236,233,216,255)),3,h(TopFrame),"00")
     IMAGE = put(IMAGE,CloseButton,width-5,5,"20")
     if active:
-        IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\captionshadow\\",(10,24,131,255)),8,8,"00")
-        IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\caption\\"),7,7,"00")
+        IMAGE = put(IMAGE,await createtext(captiontext,".\\xp\\fonts\\captionshadow\\",(10,24,131,255)),8,8,"00")
+        IMAGE = put(IMAGE,await createtext(captiontext,".\\xp\\fonts\\caption\\"),7,7,"00")
     else:
-        IMAGE = put(IMAGE,createtext(captiontext,".\\xp\\fonts\\caption\\",(216,228,248,255)),7,7,"00")
+        IMAGE = put(IMAGE,await createtext(captiontext,".\\xp\\fonts\\caption\\",(216,228,248,255)),7,7,"00")
     if(insideimagepath != ""):
         IMAGE = put(IMAGE,insideimage,3,h(TopFrame))
     if(erroriconpath != ""):
         IMAGE = put(IMAGE,erroricon,3+11,h(TopFrame)+11)
-    IMAGE = put(IMAGE,createtext(errortext,".\\xp\\fonts\\text\\",(0,0,0,255)),textposx,textposy)
+    IMAGE = put(IMAGE,await createtext(errortext,".\\xp\\fonts\\text\\",(0,0,0,255)),textposx,textposy)
     IMAGE = put(IMAGE,buttonsimage,width//2-5,height-3,"12")
     return IMAGE
 
-def CreateMacAlertDialog(width,height,title="",bar=True,icon="",errortext="",subtext="",button1="",button2="",button3="",button1default=False,button2default=False,button3default=False,button1style=0,button2style=0,button3style=0):
-    WindowBar = Image.open("mac/Error Window With bar.png").convert("RGBA")
-    WindowNoBar = Image.open("mac/Error Window No bar.png").convert("RGBA")
-    Ridges = Image.open("mac/Red Ridges.png").convert("RGBA")
-    ButtonBorder = Image.open("mac//Button Outline.png").convert("RGBA")
+async def CreateMacAlertDialog(width,height,title="",bar=True,icon="",errortext="",subtext="",button1="",button2="",button3="",button1default=False,button2default=False,button3default=False,button1style=0,button2style=0,button3style=0):
+    WindowBar = await imageopenWEB("mac/Error Window With bar.png")
+    WindowNoBar = await imageopenWEB("mac/Error Window No bar.png")
+    Ridges = await imageopenWEB("mac/Red Ridges.png")
+    ButtonBorder = await imageopenWEB("mac//Button Outline.png")
     TextHeight = 0
     IconPadding = 0
     Paddingwidth = 7
@@ -540,31 +512,31 @@ def CreateMacAlertDialog(width,height,title="",bar=True,icon="",errortext="",sub
         Paddingheight = 3+4
         Barheight = 0
     if(errortext != ""):
-        ErrorTextImg = createtextmac(errortext,"mac//fonts//caption//")
+        ErrorTextImg = await createtextmac(errortext,"mac//fonts//caption//")
         width = max(width,w(ErrorTextImg)+79+90)
         #height = max(height,h(ErrorTextImg)+Paddingheight+20)
         TextHeight += h(ErrorTextImg)
     if(subtext != ""):
-        SubTextImg = createtextmac(subtext,"mac//fonts//text//")
+        SubTextImg = await createtextmac(subtext,"mac//fonts//text//")
         SubTextPos = TextHeight
         width = max(width,w(SubTextImg)+79+90)
         TextHeight += h(SubTextImg)
     height += TextHeight + Paddingheight
     if(icon != ""):
-        IconImg = Image.open(icon).convert("RGBA")
+        IconImg = await imageopenWEB(icon)
         height = max(height,h(IconImg)+Paddingheight)
         width += w(IconImg)
         IconPadding = w(IconImg)
     buttonswidth = 0
     if(button1 != ""):
         height += 60
-        button1img = CreateMacButton(button1,button1style)
+        button1img = await CreateMacButton(button1,button1style)
         buttonswidth += w(button1img)
         if(button2 != ""):
-            button2img = CreateMacButton(button2,button2style)
+            button2img = await CreateMacButton(button2,button2style)
             buttonswidth += w(button2img)
             if(button3 != ""):
-                button3img = CreateMacButton(button3,button3style)
+                button3img = await CreateMacButton(button3,button3style)
                 buttonswidth += w(button3img)
     width = max(width,buttonswidth+79+90)
     IMAGE = Image.new("RGBA", (width,height), (236,233,216,0))
@@ -576,7 +548,7 @@ def CreateMacAlertDialog(width,height,title="",bar=True,icon="",errortext="",sub
         if(title == ""):
             IMAGE = put(IMAGE,resizeanchor(Ridges,5,4,width-6,16,1,1,1,1),5,4)
         else:
-            TitleImage = createtextmac(title,"mac//fonts//caption//")
+            TitleImage = await createtextmac(title,"mac//fonts//caption//")
             IMAGE = put(IMAGE,TitleImage,width//2-w(TitleImage)//2,3)
             IMAGE = put(IMAGE,resizeanchor(Ridges,5,4,width//2-w(TitleImage)//2-3,16,1,1,1,1),5,4)
             IMAGE = put(IMAGE,resizeanchor(Ridges,width//2+w(TitleImage)//2+5,4,width-6,16,1,1,1,1),width//2+w(TitleImage)//2+5,4)
@@ -587,42 +559,42 @@ def CreateMacAlertDialog(width,height,title="",bar=True,icon="",errortext="",sub
     if(subtext != ""):
         IMAGE = put(IMAGE,SubTextImg,47+IconPadding,Barheight+SubTextPos+16)
     if(button1 != ""):
-        button1img = CreateMacButton(button1,button1style)
+        button1img = await CreateMacButton(button1,button1style)
         IMAGE = put(IMAGE,button1img,width-17,height-17,"22")
         if(button1default):
             button1border = resize(ButtonBorder,w(button1img)+6,h(button1img)+6,5,5,5,5)
             IMAGE = put(IMAGE,button1border,width-17+3,height-17+3,"22")
         if(button2 != ""):
-            button2img = CreateMacButton(button2,button2style)
+            button2img = await CreateMacButton(button2,button2style)
             IMAGE = put(IMAGE,button2img,width-17-w(button1img)-22,height-17,"22")
             if(button2default):
                 button2border = resize(ButtonBorder,w(button2img)+6,h(button2img)+6,5,5,5,5)
                 IMAGE = put(IMAGE,button2border,width-17+3-w(button1img)-22,height-17+3,"22")
             if(button3 != ""):
-                button3img = CreateMacButton(button3,button3style)
+                button3img = await CreateMacButton(button3,button3style)
                 IMAGE = put(IMAGE,button3img,width-17-w(button2img)-22-w(button1img)-22,height-17,"22")
                 if(button3default):
                     button3border = resize(ButtonBorder,w(button3img)+6,h(button3img)+6,5,5,5,5)
                     IMAGE = put(IMAGE,button3border,width-17+3-w(button2img)-22-w(button1img)-22,height-17+3,"22")
     return IMAGE
 
-def CreateMacWindow(width,height,title="",icon="",errortext="",button1="",button2="",button3="",button1default=False,button2default=False,button3default=False,button1style=0,button2style=0,button3style=0):
-    WindowBar = Image.open("mac/Window With bar.png").convert("RGBA")
-    Ridges = Image.open("mac/Ridges.png").convert("RGBA")
-    ButtonBorder = Image.open("mac//Button Outline.png").convert("RGBA")
+async def CreateMacWindow(width,height,title="",icon="",errortext="",button1="",button2="",button3="",button1default=False,button2default=False,button3default=False,button1style=0,button2style=0,button3style=0):
+    WindowBar = await imageopenWEB("mac/Window With bar.png")
+    Ridges = await imageopenWEB("mac/Ridges.png")
+    ButtonBorder = await imageopenWEB("mac//Button Outline.png")
     Paddingheight = 29+4
     TextHeight = 0
     iconsize = 0
     if(icon != ""):
-        IconImg = Image.open(icon).convert("RGBA")
+        IconImg = await imageopenWEB(icon)
         iconsize = w(IconImg)+26
     if(errortext != ""):
-        ErrorTextImg = createtextmac(errortext,"mac//fonts//caption//")
+        ErrorTextImg = await createtextmac(errortext,"mac//fonts//caption//")
         width = max(width,w(ErrorTextImg)+iconsize+20+20)
         #height = max(height,h(ErrorTextImg)+Paddingheight+20)
         TextHeight += h(ErrorTextImg)+36
     #if(subtext != ""):
-    #    SubTextImg = createtextmac(subtext,"mac//fonts//text//")
+    #    SubTextImg = await createtextmac(subtext,"mac//fonts//text//")
     #    width = max(width,w(SubTextImg)+79+90)
     #    TextHeight += h(SubTextImg)
     height += TextHeight+24+4
@@ -633,7 +605,7 @@ def CreateMacWindow(width,height,title="",icon="",errortext="",button1="",button
     if(title == ""):
         IMAGE = put(IMAGE,resizeanchor(Ridges,5,4,width-6,16,1,1,1,1),5,4)
     else:
-        TitleImage = createtextmac(title,"mac//fonts//caption//")
+        TitleImage = await createtextmac(title,"mac//fonts//caption//")
         IMAGE = put(IMAGE,TitleImage,width//2-w(TitleImage)//2,3)
         IMAGE = put(IMAGE,resizeanchor(Ridges,5,4,width//2-w(TitleImage)//2-3,16,1,1,1,1),5,4)
         IMAGE = put(IMAGE,resizeanchor(Ridges,width//2+w(TitleImage)//2+5,4,width-6,16,1,1,1,1),width//2+w(TitleImage)//2+5,4)
@@ -642,35 +614,35 @@ def CreateMacWindow(width,height,title="",icon="",errortext="",button1="",button
     if(errortext != ""):
         IMAGE = put(IMAGE,ErrorTextImg,iconsize+20,36)
     if(button1 != ""):
-        button1img = CreateMacButton(button1,button1style)
+        button1img = await CreateMacButton(button1,button1style)
         IMAGE = put(IMAGE,button1img,width-17,height-17,"22")
         if(button1default):
             button1border = resize(ButtonBorder,w(button1img)+6,h(button1img)+6,5,5,5,5)
             IMAGE = put(IMAGE,button1border,width-17+3,height-17+3,"22")
         if(button2 != ""):
-            button2img = CreateMacButton(button2,button2style)
+            button2img = await CreateMacButton(button2,button2style)
             IMAGE = put(IMAGE,button2img,width-17-w(button1img)-22,height-17,"22")
             if(button2default):
                 button2border = resize(ButtonBorder,w(button2img)+6,h(button2img)+6,5,5,5,5)
                 IMAGE = put(IMAGE,button2border,width-17+3-w(button1img)-22,height-17+3,"22")
             if(button3 != ""):
-                button3img = CreateMacButton(button3,button3style)
+                button3img = await CreateMacButton(button3,button3style)
                 IMAGE = put(IMAGE,button3img,width-17-w(button2img)-22-w(button1img)-22,height-17,"22")
                 if(button3default):
                     button3border = resize(ButtonBorder,w(button3img)+6,h(button3img)+6,5,5,5,5)
                     IMAGE = put(IMAGE,button3border,width-17+3-w(button2img)-22-w(button1img)-22,height-17+3,"22")
     return IMAGE
 
-def CreateMacWindoid(icon="",text="",collapsed=False):
+async def CreateMacWindoid(icon="",text="",collapsed=False):
     contentwidth = 0
     contentheight = 0
     textpos = 6
     if(text != ""):
-        TextImg = createtextmac(text,"mac//fonts//text//")
+        TextImg = await createtextmac(text,"mac//fonts//text//")
         contentwidth += w(TextImg)+7
         contentheight += h(TextImg)+3
     if(icon != ""):
-        IconImg = Image.open(icon).convert("RGBA")
+        IconImg = await imageopenWEB(icon)
         contentwidth += w(IconImg) + 7
         contentheight = max(contentheight,h(IconImg))
         textpos += w(IconImg) + 7
@@ -681,11 +653,11 @@ def CreateMacWindoid(icon="",text="",collapsed=False):
         CONTENT = put(CONTENT,TextImg,textpos,5)
     if(icon != ""):
         CONTENT = put(CONTENT,IconImg,6,4)
-    Border = Image.open("mac//Windoid.png").convert("RGBA")
-    CollapsedBorder = Image.open("mac//Windoid Hidden.png").convert("RGBA")
-    Studs = Image.open("mac//Studs.png").convert("RGBA")
-    CloseButton = Image.open("mac//Windoid Close Button.png").convert("RGBA")
-    HideButton = Image.open("mac//Windoid Hide Button.png").convert("RGBA")
+    Border = await imageopenWEB("mac//Windoid.png")
+    CollapsedBorder = await imageopenWEB("mac//Windoid Hidden.png")
+    Studs = await imageopenWEB("mac//Studs.png")
+    CloseButton = await imageopenWEB("mac//Windoid Close Button.png")
+    HideButton = await imageopenWEB("mac//Windoid Hide Button.png")
     width = contentwidth + 19
     height = contentheight + 9
     IMAGE = Image.new("RGBA",(width,height),(0,0,0,0))
@@ -702,7 +674,7 @@ def CreateMacWindoid(icon="",text="",collapsed=False):
         IMAGE = put(IMAGE,tile(Studs,8,height-14-15),3,14)
     return IMAGE
 
-def mix(a,b,c):     #smoothly mixes between two values.
+async def mix(a,b,c):     #smoothly mixes between two values.
     c = min(1,max(0,c))
     c = c**0.5
     return a*(1-c)+b*c
@@ -712,21 +684,21 @@ def mix(a,b,c):     #smoothly mixes between two values.
 #amount of 3 will put it in the width/3,height/3 position
 #amount of 7 will put it in the width/7,height/7 position and so on.
 #c is there to animate the translation, from 0 - fully translated, to 1 - no translation
-def stretch(size,amount,c):   
+async def stretch(size,amount,c):   
     result = size-size*(size/(size-size/amount)) #this is needed because deform() does the opposite of what you would think it will do, it takes 4 points, and then squishes them into a rectangle.
     return mix(result,0,c)
 
 class Windows7Anim:
-    def __init__(self,second):
+    async def __init__(self,second):
         self.second = second
     
-    def getmesh(self, img):
+    async def getmesh(self, img):
         return [((0,0,w(img),h(img)),(stretch(w(img),30,self.second*4),stretch(h(img),56,self.second*4),
                                       stretch(w(img),18,self.second*4),h(img)-stretch(h(img),16,self.second*4),
                                       w(img)-stretch(w(img),18,self.second*4),h(img)-stretch(h(img),16,self.second*4),
                                       w(img)-stretch(w(img),30,self.second*4),stretch(h(img),56,self.second*4)))]  #values arbitrary, somebody needs to look into dwm and find how it animates the window
 
-def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallpaper="",buttons=[]):
+async def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallpaper="",buttons=[]):
     #pos and screenres dictate the glass texture position and size on the window border
     #if wallpaper is not empty, it will composite the error onto an image at pos's coordinates, screenres should be the same size as the wallpaper
     contentwidth = 106
@@ -739,7 +711,7 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
         contentheight += TextDim[1]
         textposy = textposy-min(TextDim[1],21)
     if(icon != ""):
-        IconImg = Image.open(icon).convert("RGBA")
+        IconImg = await imageopenWEB(icon)
         contentwidth = max(contentwidth,w(IconImg)+25+25)
         contentheight = max(contentheight,h(IconImg)+26+26)
         textpos += w(IconImg)-4+25
@@ -761,24 +733,24 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
     if(icon != ""):
         CONTENT = put(CONTENT,IconImg,25,26)
     if(text != ""):
-        CONTENT = createtext7(CONTENT,textpos+12,textposy,text,"7//fonts//text//",kerningadjust=-1)
+        CONTENT = await createtext7(CONTENT,textpos+12,textposy,text,"7//fonts//text//",kerningadjust=-1)
     if(buttons):
         CONTENT = put(CONTENT, Image.new("RGBA",(contentwidth,49),(240,240,240)),0,contentheight,"02")
     buttonpos = 0
     for i in buttons:
         buttonpos += 10
-        Button = Create7Button(i[0],i[1])
+        Button = await Create7Button(i[0],i[1])
         CONTENT = put7(CONTENT, Button, contentwidth-buttonpos,contentheight-12,"22")
         buttonpos += w(Button)
-    Window = Image.open("7//Window.png").convert("RGBA")
-    CloseButton = Image.open("7//Close Button Single.png").convert("RGBA")
-    CloseSymbol = Image.open("7//Close Symbol.png").convert("RGBA")
-    GlassImg = Image.open("7//Glass.png").convert("RGBA")
-    GlassMask = Image.open("7//Glass Mask.png").convert("RGBA")
-    TextGlow = Image.open("7//Text Glow.png").convert("RGBA")
-    SideGlowLeft = Image.open("7//Sideglow 1 Left.png").convert("RGBA")
-    SideGlowRight = Image.open("7//Sideglow 1 Right.png").convert("RGBA")
-    SideShine = Image.open("7//Side Shine.png").convert("RGBA")
+    Window = await imageopenWEB("7//Window.png")
+    CloseButton = await imageopenWEB("7//Close Button Single.png")
+    CloseSymbol = await imageopenWEB("7//Close Symbol.png")
+    GlassImg = await imageopenWEB("7//Glass.png")
+    GlassMask = await imageopenWEB("7//Glass Mask.png")
+    TextGlow = await imageopenWEB("7//Text Glow.png")
+    SideGlowLeft = await imageopenWEB("7//Sideglow 1 Left.png")
+    SideGlowRight = await imageopenWEB("7//Sideglow 1 Right.png")
+    SideShine = await imageopenWEB("7//Side Shine.png")
     width = contentwidth+8+8
     height = contentheight+8+30
     GlassMask = resize(GlassMask,width,height,8,8,30,8)
@@ -792,16 +764,16 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
     #WithBorder.show()
     if(title != ""):
         WithBorder = put(WithBorder,resize(TextGlow,TitleDim[0]+7+14+10,h(TextGlow),23,23,1,1),-7,0)
-        WithBorder = createtext7(WithBorder,8,7,title,"7//fonts//text//",kerningadjust=-1)
+        WithBorder = await createtext7(WithBorder,8,7,title,"7//fonts//text//",kerningadjust=-1)
     
     WithBorder = put(WithBorder,resize(Window,width,height,8,8,30,8),0,0)
     WithBorder = put(WithBorder,CONTENT,8,30)
     WithBorder = put(WithBorder,CloseButton,width-6,1,"20")
     WithBorder = put(WithBorder,CloseSymbol,width-6-18,5,"20")
-    ShadowTop = Image.open("7//Shadow Top.png")
-    ShadowRight = Image.open("7//Shadow Right.png")
-    ShadowBottom = Image.open("7//Shadow Bottom.png")
-    ShadowLeft = Image.open("7//Shadow Left.png")
+    ShadowTop = await imageopenWEB("7//Shadow Top.png")
+    ShadowRight = await imageopenWEB("7//Shadow Right.png")
+    ShadowBottom = await imageopenWEB("7//Shadow Bottom.png")
+    ShadowLeft = await imageopenWEB("7//Shadow Left.png")
     IMAGE = Image.new("RGBA",(width+19+13,height+18+12),(0,0,0,0))
     IMAGE = put(IMAGE, resize(ShadowTop,width+13+16,12,26,26,1,1),0,0)
     IMAGE = put(IMAGE, resize(ShadowLeft,13,height,1,1,20,14),0,12)
@@ -809,18 +781,18 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
     IMAGE = put(IMAGE, resize(ShadowBottom,width+13+17,18,28,27,1,1),0,height+12)
     IMAGE = put(IMAGE,WithBorder,13,12)
     if(wallpaper != ""):
-        WallpaperImg = Image.open(wallpaper).convert("RGBA")
+        WallpaperImg = await imageopenWEB(wallpaper)
         IMAGE = put(WallpaperImg, IMAGE, pos[0]-13, pos[1]-12)
     return IMAGE
 
-"""def Create7ButtonPanel(buttons,windowwidth=360,screenres=(1920,1080)):
+async def Create7ButtonPanel(buttons,windowwidth=360,screenres=(1920,1080)):
     summedwidth = 11
     summedheight = 20
     curwidth = 0
     curlevel = 0
     cachedbuttons = []
     for button in buttons:
-        button = Create7Button(button[0],button[1])
+        button = await Create7Button(button[0],button[1])
         cachedbuttons.append(button)
         size = button.size
         if(curwidth + size[0] > screenres[0]):
@@ -833,16 +805,16 @@ def Create7Window(icon="",text="",title="",pos=(0,0),screenres=(1920,1080),wallp
     summedheight += curlevel
     
     for button in cachedbuttons:
-        size = button.size""" #tbd
+        size = button.size
         
-def Create7TaskDialog(icon="",textbig="",textsmall="",title="",buttons=[],closebutton=True,pos=(200,100),screenres=(1920,1080),wallpaper=""):
+async def Create7TaskDialog(icon="",textbig="",textsmall="",title="",buttons=[],closebutton=True,pos=(200,100),screenres=(1920,1080),wallpaper=""):
     width = 360
     height = 0
     iconsize = 0
     if(title != ""):
         TitleDim = measuretext7(title,"7//fonts//text//",kerningadjust=-1)
     if(icon != ""):
-        IconImg = Image.open(icon).convert("RGBA")
+        IconImg = await imageopenWEB(icon)
         iconsize = w(IconImg)+10
         height += iconsize+10
     textbigheight = 0
@@ -858,30 +830,30 @@ def Create7TaskDialog(icon="",textbig="",textsmall="",title="",buttons=[],closeb
         CONTENT = put(CONTENT,IconImg,10,10)
     
     if(textbig != ""):
-        CONTENT = createtext7(CONTENT,iconsize+10,10,textbig,"7/fonts/bigtext/",(0,51,153,255),kerningadjust=-1,fit=width-iconsize-10-10)
+        CONTENT = await createtext7(CONTENT,iconsize+10,10,textbig,"7/fonts/bigtext/",(0,51,153,255),kerningadjust=-1,fit=width-iconsize-10-10)
     if(textsmall != ""):
-        CONTENT = createtext7(CONTENT,iconsize+10,textbigheight+15,textsmall,"7/fonts/text/",kerningadjust=-1,fit=width-iconsize-10-10)
+        CONTENT = await createtext7(CONTENT,iconsize+10,textbigheight+15,textsmall,"7/fonts/text/",kerningadjust=-1,fit=width-iconsize-10-10)
     if buttons:
         CONTENT = put(CONTENT, Image.new("RGBA",(width,40),(240,240,240,255)),0,height,"02")
         CONTENT = put(CONTENT, Image.new("RGBA",(width,1),(222,222,222,255)),0,height-41)
     buttonpos = 12
     for button in buttons:
-        ButtonImg = Create7TaskDialogButton(button[0],button[1])
+        ButtonImg = await Create7TaskDialogButton(button[0],button[1])
         CONTENT = put(CONTENT, ButtonImg, width-buttonpos,height-11,"22")
         buttonpos += w(ButtonImg)+8
 
 
 
         
-    Window = Image.open("7//Window.png").convert("RGBA")
-    CloseButton = Image.open("7//Close Button Single.png").convert("RGBA")
-    CloseSymbol = Image.open("7//Close Symbol.png").convert("RGBA")
-    GlassImg = Image.open("7//Glass.png").convert("RGBA")
-    GlassMask = Image.open("7//Glass Mask.png").convert("RGBA")
-    TextGlow = Image.open("7//Text Glow.png").convert("RGBA")
-    SideGlowLeft = Image.open("7//Sideglow 1 Left.png").convert("RGBA")
-    SideGlowRight = Image.open("7//Sideglow 1 Right.png").convert("RGBA")
-    SideShine = Image.open("7//Side Shine.png").convert("RGBA")
+    Window = await imageopenWEB("7//Window.png")
+    CloseButton = await imageopenWEB("7//Close Button Single.png")
+    CloseSymbol = await imageopenWEB("7//Close Symbol.png")
+    GlassImg = await imageopenWEB("7//Glass.png")
+    GlassMask = await imageopenWEB("7//Glass Mask.png")
+    TextGlow = await imageopenWEB("7//Text Glow.png")
+    SideGlowLeft = await imageopenWEB("7//Sideglow 1 Left.png")
+    SideGlowRight = await imageopenWEB("7//Sideglow 1 Right.png")
+    SideShine = await imageopenWEB("7//Side Shine.png")
     width = width+8+8
     height = height+8+30
     GlassMask = resize(GlassMask,width,height,8,8,30,8)
@@ -895,17 +867,17 @@ def Create7TaskDialog(icon="",textbig="",textsmall="",title="",buttons=[],closeb
     #WithBorder.show()
     if(title != ""):
         WithBorder = put(WithBorder,resize(TextGlow,TitleDim[0]+7+14+10,h(TextGlow),23,23,1,1),-7,0)
-        WithBorder = createtext7(WithBorder,8,7,title,"7//fonts//text//",kerningadjust=-1)
+        WithBorder = await createtext7(WithBorder,8,7,title,"7//fonts//text//",kerningadjust=-1)
     
     WithBorder = put(WithBorder,resize(Window,width,height,8,8,30,8),0,0)
     WithBorder = put(WithBorder,CONTENT,8,30)
     if closebutton:
         WithBorder = put(WithBorder,CloseButton,width-6,1,"20")
         WithBorder = put(WithBorder,CloseSymbol,width-6-18,5,"20")
-    ShadowTop = Image.open("7//Shadow Top.png")
-    ShadowRight = Image.open("7//Shadow Right.png")
-    ShadowBottom = Image.open("7//Shadow Bottom.png")
-    ShadowLeft = Image.open("7//Shadow Left.png")
+    ShadowTop = await imageopenWEB("7//Shadow Top.png")
+    ShadowRight = await imageopenWEB("7//Shadow Right.png")
+    ShadowBottom = await imageopenWEB("7//Shadow Bottom.png")
+    ShadowLeft = await imageopenWEB("7//Shadow Left.png")
     IMAGE = Image.new("RGBA",(width+19+13,height+18+12),(0,0,0,0))
     IMAGE = put(IMAGE, resize(ShadowTop,width+13+16,12,26,26,1,1),0,0)
     IMAGE = put(IMAGE, resize(ShadowLeft,13,height,1,1,20,14),0,12)
@@ -913,14 +885,14 @@ def Create7TaskDialog(icon="",textbig="",textsmall="",title="",buttons=[],closeb
     IMAGE = put(IMAGE, resize(ShadowBottom,width+13+17,18,28,27,1,1),0,height+12)
     IMAGE = put(IMAGE,WithBorder,13,12)
     if(wallpaper != ""):
-        WallpaperImg = Image.open(wallpaper).convert("RGBA")
+        WallpaperImg = await imageopenWEB(wallpaper)
         IMAGE = put(WallpaperImg, IMAGE, pos[0]-13, pos[1]-12)
     return IMAGE
 
-def Export7Animation(img,savepath):  #just put the generated window into img and set savepath to the folder you want it to save  "7//animoutput//" is recommended
+async def Export7Animation(img,savepath):  #just put the generated window into img and set savepath to the folder you want it to save  "7//animoutput//" is recommended
     for i in range(16):
         ImageChops.multiply(ImageOps.deform(img, Windows7Anim(i/60)),Image.new("RGBA",(w(img),h(img)),(255,255,255,int(max(0,min(1,(i+0.1)/15))**0.5*255)))).save(savepath+str(i)+".png")
-def even(a):
+async def even(a):
     c = ceil(a/2)*2
     dc = abs(c-a)
     f = floor(a/2)*2
@@ -929,7 +901,7 @@ def even(a):
         return f
     else:
         return c
-def buttoneven(a):
+async def buttoneven(a):
     c = ceil(a/2)*2
     dc = abs(c-a)
     f = floor(a/2)*2
@@ -938,23 +910,23 @@ def buttoneven(a):
         return f
     else:
         return c
-def getsafe(a, i, fallback):
+async def getsafe(a, i, fallback):
     try:
         return a[i]
     except IndexError:
         return fallback
-def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
+async def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
     contentwidth = 0
     contentheight = 0
     textpos = 18
     textposy = 16
     iconposy = 17
     if(text != ""):
-        TextImg = createtextmac(text,"3.1//fonts//text//")
+        TextImg = await createtextmac(text,"3.1//fonts//text//")
         contentwidth += w(TextImg)+18+17
         contentheight += h(TextImg)+16+16
     if(icon != ""):
-        IconImg = Image.open(icon).convert("RGBA")
+        IconImg = await imageopenWEB(icon)
         textpos += w(IconImg)+19
         contentwidth += w(IconImg)+18
         contentwidth = max(contentwidth,w(IconImg)+19+19)
@@ -962,21 +934,21 @@ def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
         if(text != ""):
             textposy = max(16,h(IconImg)//2-h(TextImg)//2+17)
     if(title != ""):
-        TitleImg = createtextmac(text,"3.1//fonts//text//")
+        TitleImg = await createtextmac(text,"3.1//fonts//text//")
         contentwidth = max(contentwidth,w(TitleImg)+20+1)
     if buttons:
         contentheight += 44
     buttonswidth = 0
     for button in buttons:
-        CurrentButton = Create3_1Button(button[0],button[1],getsafe(button,2,False))
+        CurrentButton = await Create3_1Button(button[0],button[1],getsafe(button,2,False))
         buttonswidth += w(CurrentButton)+17
     contentwidth = max(contentwidth,buttonswidth-17)
     contentwidth = even(contentwidth)
     if active:
-        Window = Image.open("3.1//Window.png").convert("RGBA")
+        Window = await imageopenWEB("3.1//Window.png")
     else:
-        Window = Image.open("3.1//Window Inactive.png").convert("RGBA")
-    CloseButton = Image.open("3.1//Close Button.png").convert("RGBA")
+        Window = await imageopenWEB("3.1//Window Inactive.png")
+    CloseButton = await imageopenWEB("3.1//Close Button.png")
     CONTENT = Image.new("RGBA",(contentwidth,contentheight),(255,255,255,255))
     if(text != ""):
         CONTENT = put(CONTENT,TextImg,even(textpos),even(textposy))
@@ -987,12 +959,12 @@ def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
     buttonpos = contentwidth/2-(58*len(buttons)+17*len(buttons)-17)/2
     if active:
         for i in range(len(buttons)):
-            CONTENT = put(CONTENT,Create3_1Button(buttons[i][0],buttons[i][1],getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
+            CONTENT = put(CONTENT,await Create3_1Button(buttons[i][0],buttons[i][1],getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
             print(buttons[i][0]+":",buttonpos,"which is",buttoneven(buttonpos))
             buttonpos += 58+17
     else:
         for i in range(len(buttons)):
-            CONTENT = put(CONTENT,Create3_1Button(buttons[i][0],0,getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
+            CONTENT = put(CONTENT,await Create3_1Button(buttons[i][0],0,getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
             print(buttons[i][0]+":",buttonpos,"which is",buttoneven(buttonpos))
             buttonpos += 58+17
     print(contentwidth,contentheight)
@@ -1003,14 +975,14 @@ def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
     IMAGE = put(IMAGE, CloseButton,6,5)
     if(title != ""):
         if active:
-            TitleImg = createtextmac(title,"3.1//fonts//text//",(255,255,255,255))
+            TitleImg = await createtextmac(title,"3.1//fonts//text//",(255,255,255,255))
         else:
-            TitleImg = createtextmac(title,"3.1//fonts//text//")
+            TitleImg = await createtextmac(title,"3.1//fonts//text//")
         IMAGE = put(IMAGE,TitleImg,floor((contentwidth-20-1)/2-w(TitleImg)/2)+19+6,6)
     return IMAGE
     #
 
-def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=True):
+async def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=True):
     contentwidth = 12+12+12
     contentheight = 12+16+24
     textwidth = 0
@@ -1028,13 +1000,13 @@ def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=Tru
     contentwidth += textwidth
     contentheight = max(contentheight,textheight+12+24+16)
     if(icon != ""):
-        IconImg = Image.open(icon).convert("RGBA")
+        IconImg = await imageopenWEB(icon)
         contentwidth += w(IconImg)
         contentheight = max(contentheight,h(IconImg)+12+24+16)
     maxbuttonwidth = 0
     maxbuttonheight = 0
     for button in buttons:
-        ButtonImg = CreateUbuntuButton(button[0],button[1])
+        ButtonImg = await CreateUbuntuButton(button[0],button[1])
         maxbuttonwidth = max(w(ButtonImg),maxbuttonwidth)
         maxbuttonheight = max(h(ButtonImg),maxbuttonheight)
     contentwidth = max(contentwidth, (maxbuttonwidth+4+4)*len(buttons)+8+8)
@@ -1046,20 +1018,20 @@ def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=Tru
         iconsize = w(IconImg)
     if(bigtext == ""):
         if(text != ""):
-            CONTENT = createtextubuntu(CONTENT,iconsize+24,12,text,"ubuntu/fonts/text/",(60,59,55,255))
+            CONTENT = await createtextubuntu(CONTENT,iconsize+24,12,text,"ubuntu/fonts/text/",(60,59,55,255))
     else:
-        CONTENT = createtextubuntu(CONTENT,iconsize+24,12,bigtext,"ubuntu/fonts/bigtext/",(60,59,55,255))
+        CONTENT = await createtextubuntu(CONTENT,iconsize+24,12,bigtext,"ubuntu/fonts/bigtext/",(60,59,55,255))
         if(text != ""):
-            CONTENT = createtextubuntu(CONTENT,iconsize+24,bigtextsize[1]+12+12,text,"ubuntu/fonts/text/",(60,59,55,255))
+            CONTENT = await createtextubuntu(CONTENT,iconsize+24,bigtextsize[1]+12+12,text,"ubuntu/fonts/text/",(60,59,55,255))
     buttonpos = contentwidth-12
     for button in buttons:
-        CONTENT = put(CONTENT, CreateUbuntuButton(button[0],active and button[1] or 0,[maxbuttonwidth,maxbuttonheight]),buttonpos,contentheight-16,"22")
+        CONTENT = put(CONTENT, await CreateUbuntuButton(button[0],active and button[1] or 0,[maxbuttonwidth,maxbuttonheight]),buttonpos,contentheight-16,"22")
         buttonpos -= maxbuttonwidth+8
     
-    Frame = Image.open(active and "ubuntu/Window.png" or (not active and "ubuntu/Window Inactive.png")).convert("RGBA")
-    CloseButton = Image.open(active and "ubuntu/Close Button.png" or (not active and "ubuntu/Close Button Inactive.png")).convert("RGBA")
-    Mask = Image.open("ubuntu/Mask.png").convert("RGBA")
-    Highlight = Image.open("ubuntu/Highlight.png").convert("RGBA")
+    Frame = await imageopenWEB(active and "ubuntu/Window.png" or (not active and "ubuntu/Window Inactive.png"))
+    CloseButton = await imageopenWEB(active and "ubuntu/Close Button.png" or (not active and "ubuntu/Close Button Inactive.png"))
+    Mask = await imageopenWEB("ubuntu/Mask.png")
+    Highlight = await imageopenWEB("ubuntu/Highlight.png")
     Mask = resize(Mask,contentwidth,contentheight,5,5,1,4)  
     WINDOW = resize(Frame,contentwidth+1+1,contentheight+27+1,5,5,27,5)
     WINDOW = put(WINDOW, ImageChops.multiply(Mask,CONTENT), 1, 27)
@@ -1067,60 +1039,46 @@ def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=Tru
     WINDOW = put(WINDOW, Highlight,0,27)
     WINDOW = put(WINDOW, Highlight,contentwidth+1,27)
     if(title != ""):
-        WINDOW = createtextubuntu(WINDOW, 42, 6, title, "ubuntu/fonts/caption/", (51,51,51,255))
-        WINDOW = createtextubuntu(WINDOW, 42, 4, title, "ubuntu/fonts/caption/", (51,51,51,255))
-        WINDOW = createtextubuntu(WINDOW, 41, 5, title, "ubuntu/fonts/caption/", (51,51,51,255))
-        WINDOW = createtextubuntu(WINDOW, 43, 5, title, "ubuntu/fonts/caption/", (51,51,51,255))
-        WINDOW = createtextubuntu(WINDOW, 42, 5, title, "ubuntu/fonts/caption/", (223,216,200,255))
-    Shadow = Image.open("ubuntu/Shadow.png").convert("RGBA")
+        WINDOW = await createtextubuntu(WINDOW, 42, 6, title, "ubuntu/fonts/caption/", (51,51,51,255))
+        WINDOW = await createtextubuntu(WINDOW, 42, 4, title, "ubuntu/fonts/caption/", (51,51,51,255))
+        WINDOW = await createtextubuntu(WINDOW, 41, 5, title, "ubuntu/fonts/caption/", (51,51,51,255))
+        WINDOW = await createtextubuntu(WINDOW, 43, 5, title, "ubuntu/fonts/caption/", (51,51,51,255))
+        WINDOW = await createtextubuntu(WINDOW, 42, 5, title, "ubuntu/fonts/caption/", (223,216,200,255))
+    Shadow = await imageopenWEB("ubuntu/Shadow.png")
     IMAGE = resize(Shadow,contentwidth+1+1+8+10,contentheight+27+1+8+10,20,20,21,21)
     IMAGE = put(IMAGE,WINDOW,8,8)
     return IMAGE
-# Example XP windows:
-#o = CreateXPWindow(0,0,"Notepad",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button2="No",button3="Cancel",button1style=4)
+    
+async def UpdateImage(e):
+    print("g")
+    image = await CreateXPWindow(0,0,errortext=document.getElementById("text").value,
+captiontext=document.getElementById("title").value,
+active=document.getElementById("active").checked,
+erroriconpath=document.getElementById("icon").value,
+button1=document.getElementById("button1").value,
+button2=document.getElementById("button2").value,
+button3=document.getElementById("button3").value,
+button1style=int(document.getElementById("button1style").value),
+button2style=int(document.getElementById("button2style").value),
+button3style=int(document.getElementById("button3style").value))
+    canvas = document.getElementById("output")
+    ctx = canvas.getContext("2d")
+    width,height = image.size
+    
+    canvas.style.width = f"{width}px"
+    canvas.style.height = f"{height}px"
+    
+    canvas.width = width
+    canvas.height = height
+    
+    ctx.clearRect(0, 0, width, height)
+    data = Uint8ClampedArray.new(to_js(image.tobytes()))
+    image_data = ImageData.new(data, width, height)
+    ctx.putImageData(image_data, 0, 0)
 
-#o = CreateXPWindow(0,0,"Notepad",erroriconpath="xp\\Exclamation.png",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button1style=4)
-
-#o = CreateXPWindow(0,0,"Notepad",erroriconpath="xp\\Exclamation.png",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?")
-
-#o = CreateXPWindow(0,0,"Notepad",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?")
-
-#o = CreateXPWindow(0,0,"LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOONG",errortext="short",button1="OK",button1style=4)
-
-#o = CreateXPWindow(0,0,"Notepad",erroriconpath="xp\\Exclamation.png",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button2="No",button3="Cancel",button1style=4)
-
-# Example 7 windows:
-#o = Create7Window(icon="7\\Question Mark.png",text="text",title="title",buttons=[["Cancel",0],["No",0],["Yes",4]])
-#o = Create7Window(icon="7\\Question Mark.png",text="text",title="title",buttons=[["Cancel",0],["No",0],["Yes",4]],wallpaper="7\\wallpaper.png",pos=(400,400))
-
-#o = CreateXPWindow(0,0,captiontext="Question",erroriconpath="xp\\Question.png",errortext="Multiple buttons with different styles\nAnd showing off the multiline capabilities\n.\n.\n.\n.",button1="OK",button1style=4,button2="Cancel",button3="This button is disabled and long\nand has a double line!",button3style=3)
-
-#o = Create7Window(icon="7\\Critical Error.png",text="Example error.",buttons=[["OK",4],["Disabled button",3]])
-
-#o = CreateXPWindow(0,0,captiontext="Error",erroriconpath="xp\\Exclamation.png",errortext="This error has no buttons")
-#CreateMacAlertDialog(width,height,title="",bar=True,icon="",errortext="",subtext="",button1="",button2="",button3="",button1default=False,button2default=False,button3default=False,button1style=0,button2style=0,button3style=0)
-#CreateMacWindoid(icon="",text="",collapsed=False):
-#o = CreateMacWindow(0,0,title="Window",icon="mac//Speech Bubble.png",errortext="Mac OS 9 error",button1="OK",button1default=True)
-#o = CreateMacWindoid(icon="mac//Speech Bubble Small.png",text="This is a Mac Windoid     qwertyuiopasdfghjklzxcvbnm\n---------------------------\n---------------------------")
-
-#o = Create3_1Window(icon="3.1//Exclamation.png",text="Cannot read drive a:.\n\nPlease verify the drive door is closed and that \nthe disk is formatted and free of errors.",title="Save As",buttons=[["Retry",1,True],["Cancel",0]])
-#o = Create3_1Window(icon="3.1//Exclamation.png",text="The text in the (Untitled) file has changed.\n\nDo you want to save the changes?",title="Notepad",buttons=[["Yes",1,True],["No",0,True],["Cancel",0]])
-#o = Create3_1Window(icon="3.1//Exclamation.png",text="(Untitled)\nThe image has changed.\n\nDo you want to save current changes?",title="Paintbrush",buttons=[["Yes",1,True],["No",0,True],["Cancel",0]])
-#o = Create3_1Window(text="You must be running mail with security enabled",title="Microsoft At Work Fax",buttons=[["OK",1]])
-#o = Create3_1Window(text="The selected COM port is either not supported or is \nbeing used by another device.\n\nSelect another port",title="Terminal - Error",buttons=[["OK",1]])
-#o = Create3_1Window(icon="3.1//Information.png",text="Now 1.459854% more accurate!",title="The Create3_1Window function",buttons=[["OK",1]])
-#o = Create7Window(text="Error with no icon and buttons",title="Window title")
-#o = Create3_1Window(icon="3.1//Question Mark.png",text="The component that you want to install requires \nMicrosoft Windows Network.\n\nDo you want to install Microsoft Workgroup \nNetwork now?",title="Remote Access",buttons=[["Yes",1,True],["No",0,True]],active=False)
-#o = CreateUbuntuWindow(icon="ubuntu/Error.png",bigtext="Big text",text="Small text",title="title(dont use this)",buttons=[["OK",1],["Cancel",0]])
-#
-#
-#o = Create7TaskDialog(icon="7/Exclamation.png",textbig="An error has occured",textsmall="That's all we know.",buttons=[["Close",4],["Help",0]],title="Windows",closebutton=False)
-#o=CreateMacWindow(0,0,icon="mac/Exclamation.png",errortext="This is named 'errortext'",button1="guh")
-o = CreateXPWindow(0,0,captiontext="Windows",erroriconpath="xp\\Exclamation.png",errortext="An error has occured.",button1="Cancel",button2="Retry",button3="Debug",button2style=4)
-#Export7Animation(o,"7//animoutput//")
-
-#o = Create3_1Button("OK",0)
-o.show()
-o.save("output.png")
-
-
+Update = create_proxy(UpdateImage)
+document.getElementById("generate").addEventListener("click",Update)
+</py-script>
+	
+	</body>
+</html>
