@@ -111,7 +111,7 @@ def cropx(img,a,b):  #crop but only x
 def cropy(img,a,b):  #crop but only y
     return img.crop((0,a,x(img),b))
 
-def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(1000,1000)):
+def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(3000,3000)):
     drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
@@ -140,7 +140,7 @@ def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(1000,1000
         width = max(width,cursorpos)
         height = max(height,h(char))
     return drawntext.crop((0,0,width,height))
-def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),underline=False):
+def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(3000,3000),underline=False,underlineoffset=0,cropemptyend=False):
     drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
@@ -157,7 +157,7 @@ def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),u
             cursorpos = 0
         else:
             char = Image.open(fontdirectory+str(ord(i))+".png").convert("RGBA")
-            char = put(char, Image.new("RGBA",(w(char),1),(255,255,255,255)),0,h(char)-2)
+            char = put(char, Image.new("RGBA",(w(char),1),(255,255,255,255)),0,h(char)-2+underlineoffset)
             colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
             char = ImageChops.multiply(char,colorimg)
             drawntext.paste(char,(cursorpos,line))
@@ -178,8 +178,11 @@ def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),u
         cursorpos +=w(char)
         width = max(width,cursorpos)
         height = max(height,h(char))
+    if(cropemptyend):
+        box = drawntext.getbbox()
+        width = box[2]
     return drawntext.crop((0,0,width,height))
-def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00", kerningadjust=0, fit=9999999):
+def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(3000,3000),align="00", kerningadjust=0, fit=9999999):
     drawntext = Image.new("RGBA",buffersize,(255,255,0,0))
     whitedrawntext = Image.new("RGBA",buffersize,(0,0,255,0))
     width = 0
@@ -231,7 +234,7 @@ def createtext7(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,10
     result = Image.merge("RGBA",(red,green,blue,alpha))
     return result
 
-def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0, fit=9999999): #this gives width and height of text using windows 7 rendering
+def measuretext7(text,fontdirectory, buffersize=(3000,3000), kerningadjust=0, fit=9999999): #this gives width and height of text using windows 7 rendering
     #drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
@@ -260,7 +263,7 @@ def measuretext7(text,fontdirectory, buffersize=(1000,1000), kerningadjust=0, fi
         height = max(height,h(char))
     return [width,height]
 
-def createtextubuntu(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),align="00"):
+def createtextubuntu(im,x,y,text,fontdirectory,color=(0,0,0,255), buffersize=(3000,3000),align="00"):
     drawntext = Image.new("RGBA",buffersize,(255,255,0,0))
     width = 0
     height = 0
@@ -421,6 +424,28 @@ def CreateUbuntuButton(text,style=0,predefinedsize=[]):
         size[1] = max(29,size[1])
     Button = resize(Button,size[0],size[1],5,5,5,5,scalingmethod=Image.BICUBIC)
     Button = createtextubuntu(Button, size[0]//2, size[1]//2, text, "ubuntu/fonts/text/",(60,59,55,255),align="11")
+    return Button
+
+def Create95Button(text,style=0,underline=False):
+    styles = ["95/Button.png","95/Button Default.png"]
+    Button = Image.open(styles[style]).convert("RGBA")
+    textgraphic = createtextmac(text,"95//fonts//text//",underline=underline,underlineoffset=1)
+    if style == 1:
+        Button = resize(Button,max(75,w(textgraphic)+5+5),h(textgraphic)+6+4,3,3,3,3)
+        Border = Image.open("95//Button Text Outline.png").convert("RGBA")
+        BorderImg = tile(Border,max(75,w(textgraphic)+5+5),h(textgraphic)+6+4)
+        textx = floor(w(Button)/2-w(textgraphic)/2)
+        outx = 4
+        outendx = max(75,w(textgraphic)+5+5)-4
+        #BorderImg.show()
+        Button = put(Button,textgraphic,textx,4)
+        Button = put(Button,BorderImg.crop((outx,      4,                   outx+1,            6+h(textgraphic))),   outx,    4)
+        Button = put(Button,BorderImg.crop((outx,      5+h(textgraphic),    outendx,           5+h(textgraphic)+1)), outx,    5+h(textgraphic))
+        Button = put(Button,BorderImg.crop((outendx-1,   4,                   outendx,         6+h(textgraphic))),   outendx-1, 4)
+        Button = put(Button,BorderImg.crop((outx,      4,                   outendx,           5)),                  outx,    4)
+    else:
+        Button = resize(Button,max(75,w(textgraphic)+5+5),h(textgraphic)+4+6,2,2,2,2)
+        Button = put(Button,textgraphic,floor(w(Button)/2-w(textgraphic)/2),4)
     return Button
 
 def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
@@ -970,7 +995,7 @@ def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
     for button in buttons:
         CurrentButton = Create3_1Button(button[0],button[1],getsafe(button,2,False))
         buttonswidth += w(CurrentButton)+17
-    contentwidth = max(contentwidth,buttonswidth-17)
+    contentwidth = max(contentwidth,buttonswidth+17)
     contentwidth = even(contentwidth)
     if active:
         Window = Image.open("3.1//Window.png").convert("RGBA")
@@ -1076,6 +1101,70 @@ def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=Tru
     IMAGE = resize(Shadow,contentwidth+1+1+8+10,contentheight+27+1+8+10,20,20,21,21)
     IMAGE = put(IMAGE,WINDOW,8,8)
     return IMAGE
+def betterround(a):
+    if(a%1 < 0.5):
+        return floor(a)
+    else:
+        return ceil(a)
+
+def Create95Window(icon="",text="",title="",buttons=[],active=True,closebutton=True):
+    width = 0
+    height = 0
+    textshift = 0
+    iconheight = 32
+    if(icon):
+        IconImg = Image.open(icon).convert("RGBA")
+        width += w(IconImg)+12+12
+        height = max(height,h(IconImg)+12+6)
+        textshift += w(IconImg)+10
+        iconheight = h(IconImg)
+    if(text):
+        TextImg = createtextmac(text,"95/fonts/text/")
+        print(w(TextImg))
+        print(w(TextImg)+textshift+18+12)
+        width = max(width,w(TextImg)+textshift+18+11)
+        height = max(height,h(TextImg)+12+6)
+    if(buttons):
+        button = buttons[0]
+        ButtonsImg = Image.new("RGBA",(1,1),(0,0,0,0))
+        ButtonImg = Create95Button(button[0],getsafe(button,1,0) if active else 0,getsafe(button,2,False))
+        ButtonsImg = put(Image.new("RGBA",(w(ButtonsImg)+w(ButtonImg),max(h(ButtonsImg),h(ButtonImg))),(0,0,0,0)),ButtonsImg,0,0)
+        ButtonsImg = put(ButtonsImg,ButtonImg,w(ButtonsImg),0,"20")
+        buttons.pop(0)
+        for button in buttons:
+            ButtonImg = Create95Button(button[0],getsafe(button,1,0) if active else 0,getsafe(button,2,False))
+            ButtonsImg = put(Image.new("RGBA",(w(ButtonsImg)+w(ButtonImg)+6,max(h(ButtonsImg),h(ButtonImg))),(0,0,0,0)),ButtonsImg,0,0)
+            ButtonsImg = put(ButtonsImg,ButtonImg,w(ButtonsImg),0,"20")
+        width = max(width,w(ButtonsImg)+12+12)
+        height += h(ButtonsImg)+12+11
+        buttons.append("good")
+    #width = 262
+    #height = 96
+    IMAGE = Image.new("RGBA",(width,height),(192,192,192,255))
+    if(icon):
+        IMAGE = put(IMAGE,IconImg,12,12)
+    if(text):
+
+        IMAGE = put(IMAGE,TextImg,18+textshift,21 if h(TextImg) == 13 else 16 if h(TextImg) == 26 else 12 )
+    if(buttons):
+        print(width/2-w(ButtonsImg)/2+1)
+        print(floor(width/2-w(ButtonsImg)/2)+1)
+        IMAGE = put(IMAGE, ButtonsImg,floor(width/2-w(ButtonsImg)/2)+1,height-12,"02")
+    if active:
+        Window = Image.open("95/Window.png").convert("RGBA")
+    else:
+        Window = Image.open("95/Window Inactive.png").convert("RGBA")
+    if closebutton:
+        CloseButton = Image.open("95/Close Button.png").convert("RGBA")
+    else:
+        CloseButton = Image.open("95/Close Button Disabled.png").convert("RGBA")
+    IMAGE = put(resize(Window,width+2+2,height+21+2,3,3,21,2),IMAGE,2,21)
+    if(title):
+        TitleImg = createtextmac(title,"95/fonts/caption/",(255,255,255) if active else (192,192,192))
+        IMAGE = put(IMAGE,TitleImg,5,5)
+    print(IMAGE.size)
+    IMAGE = put(IMAGE,CloseButton,width-1,5,"20")
+    return IMAGE
 # Example XP windows:
 #o = CreateXPWindow(0,0,"Notepad",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button2="No",button3="Cancel",button1style=4)
 
@@ -1116,9 +1205,17 @@ def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],active=Tru
 #
 #o = Create7TaskDialog(icon="7/Exclamation.png",textbig="An error has occured",textsmall="That's all we know.",buttons=[["Close",4],["Help",0]],title="Windows",closebutton=False)
 #o=CreateMacWindow(0,0,icon="mac/Exclamation.png",errortext="This is named 'errortext'",button1="guh")
-o = CreateXPWindow(0,0,captiontext="Windows",erroriconpath="xp\\Exclamation.png",errortext="An error has occured.",button1="Cancel",button2="Retry",button3="Debug",button2style=4)
+#o = CreateXPWindow(0,0,captiontext="Windows",erroriconpath="xp\\Exclamation.png",errortext="An error has occured.",button1="Cancel",button2="Retry",button3="Debug",button2style=4)
 #Export7Animation(o,"7//animoutput//")
-
+#o = Create3_1Window(icon="3.1//Exclamation.png",text="cos",title="gfdgdf",buttons=[["Yes",1,True],["No",0,True],["Cancel",0]])
+#o = Create95Window(icon="95/Exclamation.png",text="Save changes to Document?",title="WordPad",buttons=[["Yes",1,True],["No",0,True],["Cancel",0]])
+#o = Create95Window(icon="95/Exclamation.png",text="The file C:\\WINDOWS\\SYSTEM\\Krnl386.exe contains no icons.\n\nChoose an icon from the list or specify a different file.",title="Change Icon",buttons=[["OK",1]],closebutton=False)
+#o = Create95Window(icon="95/Exclamation.png",text="The file C:\\New Shortcut.lnk cannot be found.",title="Create Shortcut",buttons=[["OK",1]],closebutton=False,active=True)
+o = Create95Window(icon="95/Exclamation.png",text="Setup has finished configuring your system.\n\nYou must restart your computer before the new settings will take \neffect.\n\nClick OK to restart your computer now.",buttons=[["OK",1]],closebutton=False,active=True,title="Windows 95 Setup")
+#o = Create95Window(icon="95/Critical Error.png",text="Please insert the disk labeled 'Windows 95 Disk1', and then click \nOK.",buttons=[["OK",1]],closebutton=False,active=True,title="Insert Disk")
+#o = Create95Window(icon="95/Information.png",text="You must provide computer and workgroup names that will identify \nthis computer on the network.",buttons=[["OK",1]],closebutton=False,active=True,title="Network")
+#o = Create95Window(icon="95/Critical Error.png",text="G:\\\n\nA device attached to the system is not functioning.",title="G:\\",buttons=[["OK",1]],closebutton=False,active=True)
+#o = Create95Button(text="Yes",underline=True,style=1)
 #o = Create3_1Button("OK",0)
 o.show()
 o.save("output.png")
