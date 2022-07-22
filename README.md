@@ -30,6 +30,7 @@ There are examples in the comments at the bottom, just uncomment any line and se
 * 🟢 Windows 7
 * 🟢 Windows 3.1
 * 🟢 Ubuntu 10.04
+* 🟢 Windows 95
 # Todo:
 ## Windows XP
 * 🔴 Implement 7's list button system
@@ -56,7 +57,7 @@ There are examples in the comments at the bottom, just uncomment any line and se
 
 ## Future OS's
 * 🟢 Ubuntu (10.04 and a couple others)
-* 🔴 Windows 95,98,2000
+* 🟠 Windows 95,98,2000
 * 🔴 Windows Vista
 * 🔴 Windows 8
 
