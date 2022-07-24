@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
+        <title>Window Creator</title>
 		<meta charset="utf-8" />
-		<title>Window Creator</title>
+        <meta content="Windows Error message generator" property="og:title" />
+        <meta content="Free and open-source error message generator. Supports Windows XP, Windows 95, Windows 7 and more!" property="og:description" />
+        <meta content="https://relt-1.github.io/app.html" property="og:url" />
+        <meta content="https://github.com/relt-1/WindowCreator/raw/main/95/Critical%20Error.png" property="og:image" />
+        <meta content="#FF0000" data-react-helmet="true" name="theme-color" />
+        <meta name="description" content="Free and open-source online error message generator. Supports Windows XP, Windows 95, Windows 7 and more!" />
+        <meta name="google-site-verification" content="QR_SBSjEUmXu-LYnybwDFrW7cqzWaFGHMzt0Bqj5574" />
 		<link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
 		<script defer src="https://pyscript.net/alpha/pyscript.js"></script>
         <style>
@@ -143,9 +150,9 @@
     <p>title:</p>
     <input id="title" type="text" value="" placeholder="title here">
     <p>text:</p>
-	<textarea id="text" value="" placeholder="main error text here"></textarea>
+	<textarea id="text" value="" placeholder="main error text here" style="width: 30%; height: 200px;"></textarea>
     <p>second text:</p>
-	<textarea id="subtext" value="" placeholder="second error text here"></textarea>
+	<textarea id="subtext" value="" placeholder="second error text here" style="width: 30%; height: 200px;"></textarea>
     <p>icon: </p>
     <form>
     <table style="margin-left:auto;margin-right:auto;">
@@ -163,6 +170,10 @@
         
         10.04</th>
         <th>Mac OS 9</th>
+        </th>
+        <th>Windows
+        
+        95</th>
     </tr>
     <tr>
         <td>
@@ -212,6 +223,16 @@
                 </div>
                 <div class="background">
                     <input type="radio" name="icon" value="mac/hand.png">
+                </div>
+            </div>
+        </td>
+        <td>
+            <div class="wrapper">
+                <div class="content">
+                    <img src="https://github.com/relt-1/WindowCreator/raw/main/95/Critical%20Error.png">
+                </div>
+                <div class="background">
+                    <input type="radio" name="icon" value="95/Critical Error.png">
                 </div>
             </div>
         </td>
@@ -267,6 +288,16 @@
                 </div>
             </div>
         </td>
+        <td>
+            <div class="wrapper">
+                <div class="content">
+                    <img src="https://github.com/relt-1/WindowCreator/raw/main/95/Exclamation.png">
+                </div>
+                <div class="background">
+                    <input type="radio" name="icon" value="95/Exclamation.png">
+                </div>
+            </div>
+        </td>
     </tr>
     <tr>
         <td>
@@ -316,6 +347,16 @@
                 </div>
                 <div class="background">
                     <input type="radio" name="icon" value="mac/Speech Bubble.png">
+                </div>
+            </div>
+        </td>
+        <td>
+            <div class="wrapper">
+                <div class="content">
+                    <img src="https://github.com/relt-1/WindowCreator/raw/main/95/Information.png">
+                </div>
+                <div class="background">
+                    <input type="radio" name="icon" value="95/Information.png">
                 </div>
             </div>
         </td>
@@ -371,6 +412,16 @@
                 </div>
             </div>
         </td>
+        <td>
+            <div class="wrapper">
+                <div class="content">
+                    <img src="https://github.com/relt-1/WindowCreator/raw/main/95/Question.png">
+                </div>
+                <div class="background">
+                    <input type="radio" name="icon" value="95/Question.png">
+                </div>
+            </div>
+        </td>
     </tr>
     </table>
     <input id="customicon" type="text" value="" placeholder="custom url here like https://i.imgur.com/cUoeEc0.png" style="width:500px">
@@ -403,6 +454,7 @@
     <canvas id="ubuntuoutput"></canvas>
     <canvas id="3_1output"></canvas>
     <canvas id="taskdialogoutput"></canvas>
+    <canvas id="95output"></canvas>
     
     <br />
     <p>theme used from the amazing Skeuocord <a href="https://github.com/Marda33/SkeuoCord">https://github.com/Marda33/SkeuoCord (link)</a></p>
@@ -493,7 +545,7 @@ async def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(100
         width = max(width,cursorpos)
         height = max(height,h(char))
     return drawntext.crop((0,0,width,height))
-async def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),underline=False):
+async def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1000),underline=False, underlineoffset=0):
     drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
     height = 0
@@ -508,7 +560,7 @@ async def createtextmac(text,fontdirectory,color=(0,0,0,255), buffersize=(1000,1
             cursorpos = 0
         else:
             char = await imageopenWEB(fontdirectory+str(ord(i))+".png")
-            char = put(char, Image.new("RGBA",(w(char),1),(255,255,255,255)),0,h(char)-2)
+            char = put(char, Image.new("RGBA",(w(char),1),(255,255,255,255)),0,h(char)-2+underlineoffset)
             colorimg = Image.new("RGBA",(w(char),h(char)),(color[0],color[1],color[2],255))
             char = ImageChops.multiply(char,colorimg)
             drawntext.paste(char,(cursorpos,line))
@@ -712,7 +764,7 @@ async def CreateMacButton(text,style=0):
     return Button
 
 async def Create7Button(text,style=0):
-    styles = ["7/Button.png","","","7/Button Disabled.png","7/Button Defaulted.png","7/Button Defaulted Animation.png"]
+    styles = ["7/Button.png","7/Button.png","7/Button.png","7/Button Disabled.png","7/Button Defaulted.png","7/Button Defaulted Animation.png"]
     Button = await imageopenWEB(styles[min(style,len(styles)-1)])
     col = (0,0,0,255)
     #if(style==3):
@@ -724,7 +776,7 @@ async def Create7Button(text,style=0):
     return Button
 
 async def Create7TaskDialogButton(text,style=0):
-    styles = ["7/Button.png","","","7/Button Disabled.png","7/Button Defaulted.png","7/Button Defaulted Animation.png"]
+    styles = ["7/Button.png","7/Button.png","7/Button.png","7/Button Disabled.png","7/Button Defaulted.png","7/Button Defaulted Animation.png"]
     Button = await imageopenWEB(styles[min(style,len(styles)-1)])
     col = (0,0,0,255)
     #if(style==3):
@@ -769,6 +821,29 @@ async def CreateUbuntuButton(text,style=0,predefinedsize=[]):
         size[1] = max(29,size[1])
     Button = resize(Button,size[0],size[1],5,5,5,5,scalingmethod=Image.BICUBIC)
     Button = await createtextubuntu(Button, size[0]//2, size[1]//2, text, "ubuntu/fonts/text/",(60,59,55,255),align="11")
+    return Button
+
+async def Create95Button(text,style=0,underline=False):
+    styles = ["95/Button.png","95/Button Default.png"]
+    style = min(style,len(styles)-1)
+    Button = await imageopenWEB(styles[style])
+    textgraphic = await createtextmac(text,"95//fonts//text//",underline=underline,underlineoffset=1)
+    if style == 1:
+        Button = resize(Button,max(75,w(textgraphic)+5+5),h(textgraphic)+6+4,3,3,3,3)
+        Border = await imageopenWEB("95//Button Text Outline.png")
+        BorderImg = tile(Border,max(75,w(textgraphic)+5+5),h(textgraphic)+6+4)
+        textx = floor(w(Button)/2-w(textgraphic)/2)
+        outx = 4
+        outendx = max(75,w(textgraphic)+5+5)-4
+        #BorderImg.show()
+        Button = put(Button,textgraphic,textx,4)
+        Button = put(Button,BorderImg.crop((outx,      4,                   outx+1,            6+h(textgraphic))),   outx,    4)
+        Button = put(Button,BorderImg.crop((outx,      5+h(textgraphic),    outendx,           5+h(textgraphic)+1)), outx,    5+h(textgraphic))
+        Button = put(Button,BorderImg.crop((outendx-1,   4,                   outendx,         6+h(textgraphic))),   outendx-1, 4)
+        Button = put(Button,BorderImg.crop((outx,      4,                   outendx,           5)),                  outx,    4)
+    else:
+        Button = resize(Button,max(75,w(textgraphic)+5+5),h(textgraphic)+4+6,2,2,2,2)
+        Button = put(Button,textgraphic,floor(w(Button)/2-w(textgraphic)/2),4)
     return Button
 
 async def CreateXPWindow(width,height,captiontext="",active=True,insideimagepath = "",erroriconpath="",errortext="",button1="",button2="",button3="",button1style=0,button2style=0,button3style=0):
@@ -1435,7 +1510,68 @@ async def CreateUbuntuWindow(icon="",bigtext="",text="",title="",buttons=[],acti
     IMAGE = resize(Shadow,contentwidth+1+1+8+10,contentheight+27+1+8+10,20,20,21,21)
     IMAGE = put(IMAGE,WINDOW,8,8)
     return IMAGE
-    
+
+async def Create95Window(icon="",text="",title="",buttons=[],active=True,closebutton=True):
+    buttons = buttons.copy()
+    width = 0
+    height = 0
+    textshift = 0
+    iconheight = 32
+    if(icon):
+        IconImg = await imageopenWEB(icon)
+        width += w(IconImg)+12+12
+        height = max(height,h(IconImg)+12+6)
+        textshift += w(IconImg)+10
+        iconheight = h(IconImg)
+    if(text):
+        TextImg = await createtextmac(text,"95/fonts/text/")
+        print(w(TextImg))
+        print(w(TextImg)+textshift+18+12)
+        width = max(width,w(TextImg)+textshift+18+11)
+        height = max(height,h(TextImg)+12+6)
+    print(buttons)
+    if(buttons):
+        button = buttons[0]
+        ButtonsImg = Image.new("RGBA",(1,1),(0,0,0,0))
+        ButtonImg = await Create95Button(button[0],getsafe(button,1,0) if active else 0,getsafe(button,2,False))
+        ButtonsImg = put(Image.new("RGBA",(w(ButtonsImg)+w(ButtonImg),max(h(ButtonsImg),h(ButtonImg))),(0,0,0,0)),ButtonsImg,0,0)
+        ButtonsImg = put(ButtonsImg,ButtonImg,w(ButtonsImg),0,"20")
+        buttons.pop(0)
+        for button in buttons:
+            ButtonImg = await Create95Button(button[0],getsafe(button,1,0) if active else 0,getsafe(button,2,False))
+            ButtonsImg = put(Image.new("RGBA",(w(ButtonsImg)+w(ButtonImg)+6,max(h(ButtonsImg),h(ButtonImg))),(0,0,0,0)),ButtonsImg,0,0)
+            ButtonsImg = put(ButtonsImg,ButtonImg,w(ButtonsImg),0,"20")
+        width = max(width,w(ButtonsImg)+12+12)
+        height += h(ButtonsImg)+12+11
+        buttons.append("good")
+    #width = 262
+    #height = 96
+    IMAGE = Image.new("RGBA",(width,height),(192,192,192,255))
+    if(icon):
+        IMAGE = put(IMAGE,IconImg,12,12)
+    if(text):
+
+        IMAGE = put(IMAGE,TextImg,18+textshift,21 if h(TextImg) == 13 else 16 if h(TextImg) == 26 else 12 )
+    if(buttons):
+        print(width/2-w(ButtonsImg)/2+1)
+        print(floor(width/2-w(ButtonsImg)/2)+1)
+        IMAGE = put(IMAGE, ButtonsImg,floor(width/2-w(ButtonsImg)/2)+1,height-12,"02")
+    if active:
+        Window = await imageopenWEB("95/Window.png")
+    else:
+        Window = await imageopenWEB("95/Window Inactive.png")
+    if closebutton:
+        CloseButton = await imageopenWEB("95/Close Button.png")
+    else:
+        CloseButton = await imageopenWEB("95/Close Button Disabled.png")
+    IMAGE = put(resize(Window,width+2+2,height+21+2,3,3,21,2),IMAGE,2,21)
+    if(title):
+        TitleImg = await createtextmac(title,"95/fonts/caption/",(255,255,255) if active else (192,192,192))
+        IMAGE = put(IMAGE,TitleImg,5,5)
+    print(IMAGE.size)
+    IMAGE = put(IMAGE,CloseButton,width-1,5,"20")
+    return IMAGE
+
 async def UpdateImagexp():
     image = await CreateXPWindow(0,0,errortext=document.getElementById("text").value,
 captiontext=document.getElementById("title").value,
@@ -1470,6 +1606,15 @@ def createlist(b1,b2,b3,s1,s2,s3):
             if(b3 != ""):
                 buttonlist.append([b3,s3])
     return buttonlist
+def createlist95(b1,b2,b3,s1,s2,s3,u1,u2,u3):
+    buttonlist = []
+    if(b1 != ""):
+        buttonlist.append([b1,s1,u1])
+        if(b2 != ""):
+            buttonlist.append([b2,s2,u2])
+            if(b3 != ""):
+                buttonlist.append([b3,s3,u3])
+    return buttonlist
 async def UpdateImage7():
     button1=document.getElementById("button1").value
     button2=document.getElementById("button2").value
@@ -1503,10 +1648,13 @@ async def UpdateImage3_1():
     button1style=int(document.getElementById("button1style").value)
     button2style=int(document.getElementById("button2style").value)
     button3style=int(document.getElementById("button3style").value)
+    button1underline=int(document.getElementById("button1default").checked)
+    button2underline=int(document.getElementById("button2default").checked)
+    button3underline=int(document.getElementById("button3default").checked)
     image = await Create3_1Window(text=document.getElementById("text").value,
 title=document.getElementById("title").value,
 icon=document.querySelector('input[name="icon"]:checked').value,
-buttons=createlist(button1,button2,button3,button1style,button2style,button3style),
+buttons=createlist95(button1,button2,button3,button1style,button2style,button3style,button1underline,button2underline,button3underline),
 active=document.getElementById("active").checked)
     canvas = document.getElementById("3_1output")
     ctx = canvas.getContext("2d")
@@ -1655,6 +1803,37 @@ buttons=createlist(button1,button2,button3,button1style,button2style,button3styl
     image_data = ImageData.new(data, width, height)
     ctx.putImageData(image_data, 0, 0)
 
+async def UpdateImage95():
+    button1=document.getElementById("button1").value
+    button2=document.getElementById("button2").value
+    button3=document.getElementById("button3").value
+    button1style=int(document.getElementById("button1style").value)
+    button2style=int(document.getElementById("button2style").value)
+    button3style=int(document.getElementById("button3style").value)
+    button1underline=int(document.getElementById("button1default").checked)
+    button2underline=int(document.getElementById("button2default").checked)
+    button3underline=int(document.getElementById("button3default").checked)
+    image = await Create95Window(text=document.getElementById("text").value,
+title=document.getElementById("title").value,
+icon=document.querySelector('input[name="icon"]:checked').value,
+buttons=createlist95(button1,button2,button3,button1style,button2style,button3style,button1underline,button2underline,button3underline),
+active=document.getElementById("active").checked,
+closebutton=document.getElementById("secondary").checked)
+    canvas = document.getElementById("95output")
+    ctx = canvas.getContext("2d")
+    width,height = image.size
+    
+    canvas.style.width = f"{width}px"
+    canvas.style.height = f"{height}px"
+    
+    canvas.width = width
+    canvas.height = height
+    
+    ctx.clearRect(0, 0, width, height)
+    data = Uint8ClampedArray.new(to_js(image.tobytes()))
+    image_data = ImageData.new(data, width, height)
+    ctx.putImageData(image_data, 0, 0)
+
 async def UpdateImage(e):
     await asyncio.gather(
         UpdateImagexp(),
@@ -1664,7 +1843,8 @@ async def UpdateImage(e):
         UpdateImageMac(),
         UpdateImageMacAlert(),
         UpdateImageMacWindoid(),
-        UpdateImage7TaskDialog()
+        UpdateImage7TaskDialog(),
+        UpdateImage95()
     )
 
 def UpdateCustomIcon(e=None):
