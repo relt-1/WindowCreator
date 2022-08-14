@@ -116,7 +116,14 @@ def gradient(width,height,colora,colorb):
     b = Image.frombytes("L",(width,1),np.uint8(np.linspace(colora[2],colorb[2],width)))
     final = Image.merge("RGB",(r,g,b)).convert("RGBA")
     return final.resize((width,height))
-    
+def split(img,n):
+    W = w(img)
+    H = h(img)
+    return [img.crop((0,H/n*i,W,H/n*(i+1))) for i in range(n)]
+def take(img,n,i):
+    W = w(img)
+    H = h(img)
+    return img.crop((0,H/n*i,W,H/n*(i+1)))
 def createtext(text,fontdirectory,color=(255,255,255,255), buffersize=(3000,3000),underline=False,underlineoffset=0,kerningadjust=0):
     drawntext = Image.new("RGBA",buffersize,(255,127,127,0))
     width = 0
@@ -1061,14 +1068,11 @@ def Create3_1Window(icon="",text="",title="",buttons=[],active=True):
     if active:
         for i in range(len(buttons)):
             CONTENT = put(CONTENT,Create3_1Button(buttons[i][0],buttons[i][1],getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
-            print(buttons[i][0]+":",buttonpos,"which is",buttoneven(buttonpos))
             buttonpos += 58+17
     else:
         for i in range(len(buttons)):
             CONTENT = put(CONTENT,Create3_1Button(buttons[i][0],0,getsafe(buttons[i],2,False)),buttoneven(buttonpos),contentheight-10,"02")
-            print(buttons[i][0]+":",buttonpos,"which is",buttoneven(buttonpos))
             buttonpos += 58+17
-    print(contentwidth,contentheight)
     width = contentwidth+5+5
     height = contentheight+24+5
     IMAGE = resize(Window,width,height,6,6,24,5)
@@ -1168,8 +1172,6 @@ def Create95Window(icon="",text="",title="",buttons=[],active=True,closebutton=T
         iconheight = h(IconImg)
     if(text):
         TextImg = createtextmac(text,"95/fonts/text/")
-        print(w(TextImg))
-        print(w(TextImg)+textshift+18+12)
         width = max(width,w(TextImg)+textshift+18+11)
         height = max(height,h(TextImg)+12+6)
     if(buttons):
@@ -1195,8 +1197,6 @@ def Create95Window(icon="",text="",title="",buttons=[],active=True,closebutton=T
 
         IMAGE = put(IMAGE,TextImg,18+textshift,21 if h(TextImg) == 13 else 16 if h(TextImg) == 26 else 12 )
     if(buttons):
-        print(width/2-w(ButtonsImg)/2+1)
-        print(floor(width/2-w(ButtonsImg)/2)+1)
         IMAGE = put(IMAGE, ButtonsImg,floor(width/2-w(ButtonsImg)/2)+1,height-12,"02")
     if active:
         Window = Image.open("95/Window.png").convert("RGBA")
@@ -1213,7 +1213,7 @@ def Create95Window(icon="",text="",title="",buttons=[],active=True,closebutton=T
     print(IMAGE.size)
     IMAGE = put(IMAGE,CloseButton,width-1,5,"20")
     return IMAGE
-def Create98Window(icon="",text="",title="",buttons=[],active=True,closebutton=True):
+def Create98Window(icon="",text="",title="",buttons=[],active=True,closebutton=True,gradient1active=(0,0,128),gradient2active=(16,132,208),gradient1inactive=(128,128,128),gradient2inactive=(181,181,181)):
     width = 0
     height = 0
     textshift = 0
@@ -1226,8 +1226,6 @@ def Create98Window(icon="",text="",title="",buttons=[],active=True,closebutton=T
         iconheight = h(IconImg)
     if(text):
         TextImg = createtextmac(text,"95/fonts/text/")
-        print(w(TextImg))
-        print(w(TextImg)+textshift+18+12)
         width = max(width,w(TextImg)+textshift+18+11)
         height = max(height,h(TextImg)+12+6)
     if(buttons):
@@ -1266,11 +1264,11 @@ def Create98Window(icon="",text="",title="",buttons=[],active=True,closebutton=T
         CloseButton = Image.open("95/Close Button Disabled.png").convert("RGBA")
     IMAGE = put(resize(Window,width+2+2,height+21+2,3,3,21,2),IMAGE,2,21)
     if active:
-        IMAGE = put(IMAGE,Image.new("RGBA",(width-2,18),(16,132,208)),3,3)
-        IMAGE = put(IMAGE,gradient(width-2-19,18,(0,0,128),(16,132,208)),3,3)
+        IMAGE = put(IMAGE,Image.new("RGBA",(width-2,18),gradient2active),3,3)
+        IMAGE = put(IMAGE,gradient(width-2-19,18,gradient1active,gradient2active),3,3)
     else:
-        IMAGE = put(IMAGE,Image.new("RGBA",(width-2,18),(181,181,181)),3,3)
-        IMAGE = put(IMAGE,gradient(width-2-19,18,(128,128,128),(181,181,181)),3,3)
+        IMAGE = put(IMAGE,Image.new("RGBA",(width-2,18),gradient2inactive),3,3)
+        IMAGE = put(IMAGE,gradient(width-2-19,18,gradient1inactive,gradient2inactive),3,3)
     if(title):
         TitleImg = createtextmac(title,"95/fonts/caption/",(255,255,255) if active else (192,192,192))
         IMAGE = put(IMAGE,TitleImg,5,5)
@@ -1290,8 +1288,6 @@ def Create2000Window(icon="",text="",title="",buttons=[],active=True,closebutton
         iconheight = h(IconImg)
     if(text):
         TextImg = createtext(text,"xp/fonts/text/",(0,0,0,255))
-        print(w(TextImg))
-        print(w(TextImg)+textshift+18+12)
         width = max(width,w(TextImg)+textshift+18+11)
         height = max(height,h(TextImg)+12+6)
     if(buttons):
@@ -1341,6 +1337,65 @@ def Create2000Window(icon="",text="",title="",buttons=[],active=True,closebutton
         IMAGE = put(IMAGE,TitleImg,6,5)
     #print(IMAGE.size)
     IMAGE = put(IMAGE,CloseButton,width-1,5,"20")
+    return IMAGE
+
+def FrameXPWindow(image,title,active=True,close=1,maximize=1,minimize=1,question=0):
+    if (maximize-1)&3 == 3:
+        if active:
+            TopFrame = Image.open("xp/Frame Up Active.png").convert("RGBA")
+            LeftFrame = Image.open("xp/Frame Left Active Unresizable.png").convert("RGBA")
+            RightFrame = Image.open("xp/Frame Right Active Unresizable.png").convert("RGBA")
+            BottomFrame = Image.open("xp/Frame Bottom Active Unresizable.png").convert("RGBA")
+        else:
+            TopFrame = Image.open("xp/Frame Up Inactive.png").convert("RGBA")
+            LeftFrame = Image.open("xp/Frame Left Inactive Unresizable.png").convert("RGBA")
+            RightFrame = Image.open("xp/Frame Right Inactive Unresizable.png").convert("RGBA")
+            BottomFrame = Image.open("xp/Frame Bottom Inactive Unresizable.png").convert("RGBA")
+    else:
+        if active:
+            TopFrame = Image.open("xp/Frame Up Active.png").convert("RGBA")
+            LeftFrame = Image.open("xp/Frame Left Active.png").convert("RGBA")
+            RightFrame = Image.open("xp/Frame Right Active.png").convert("RGBA")
+            BottomFrame = Image.open("xp/Frame Bottom Active.png").convert("RGBA")
+        else:
+            TopFrame = Image.open("xp/Frame Up Inactive.png").convert("RGBA")
+            LeftFrame = Image.open("xp/Frame Left Inactive.png").convert("RGBA")
+            RightFrame = Image.open("xp/Frame Right Inactive.png").convert("RGBA")
+            BottomFrame = Image.open("xp/Frame Bottom Inactive.png").convert("RGBA")
+    CONTENT = Image.open(image).convert("RGBA")
+    width = w(CONTENT)+w(RightFrame)+w(LeftFrame)
+    height = h(CONTENT)+h(TopFrame)+h(BottomFrame)
+    IMAGE = Image.new("RGBA", (width,height), (0,0,0,0))
+    IMAGE = put(IMAGE,resize(TopFrame,width,h(TopFrame),28,35,9,17,Image.NEAREST),0,0)
+    IMAGE = put(IMAGE,LeftFrame.resize((w(LeftFrame),height-h(TopFrame)-3),Image.NEAREST),0,h(TopFrame),"00")
+    IMAGE = put(IMAGE,RightFrame.resize((w(RightFrame),height-h(TopFrame)-3),Image.NEAREST),width,h(TopFrame),"20")
+    IMAGE = put(IMAGE,cropx(BottomFrame,0,5),0,height,"02")
+    IMAGE = put(IMAGE,cropx(BottomFrame,4,w(BottomFrame)-5).resize((width-10,h(BottomFrame)),Image.NEAREST),5,height,"02")
+    IMAGE = put(IMAGE,cropx(BottomFrame,w(BottomFrame)-5,w(BottomFrame)),width,height,"22")
+    IMAGE = put(IMAGE,CONTENT,w(LeftFrame),h(TopFrame),"00")
+    buttonsoffset = 0
+    if(close != 0):
+        Buttons = Image.open("xp/Close Buttons.png").convert("RGBA")
+        IMAGE = put(IMAGE,take(Buttons,8,close-1+4*(not active)),width-5-buttonsoffset,5,"20")
+        buttonsoffset += w(Buttons)+2
+    if(maximize != 0):
+        Buttons = Image.open("xp/Maximize Buttons.png").convert("RGBA")
+        IMAGE = put(IMAGE,take(Buttons,8,maximize-1+4*(not active)),width-5-buttonsoffset,5,"20")
+        buttonsoffset += w(Buttons)+2
+    if(minimize != 0):
+        Buttons = Image.open("xp/Minimize Buttons.png").convert("RGBA")
+        IMAGE = put(IMAGE,take(Buttons,8,minimize-1+4*(not active)),width-5-buttonsoffset,5,"20")
+        buttonsoffset += w(Buttons)+2
+    if(question != 0):
+        Buttons = Image.open("xp/Help Buttons.png").convert("RGBA")
+        IMAGE = put(IMAGE,take(Buttons,8,question-1+4*(not active)),width-5-buttonsoffset,5,"20")
+        buttonsoffset += w(Buttons)+2
+    if title:
+        if active:
+            IMAGE = put(IMAGE,createtext(title,".\\xp\\fonts\\captionshadow\\",(10,24,131,255)),8,8,"00")
+            IMAGE = put(IMAGE,createtext(title,".\\xp\\fonts\\caption\\"),7,7,"00")
+        else:
+            IMAGE = put(IMAGE,createtext(title,".\\xp\\fonts\\caption\\",(216,228,248,255)),7,7,"00")
     return IMAGE
 # Example XP windows:
 #o = CreateXPWindow(0,0,"Notepad",errortext="The text in the Untitled file has changed.\n\nDo you want to save the changes?",button1="Yes",button2="No",button3="Cancel",button1style=4)
@@ -1394,8 +1449,14 @@ def Create2000Window(icon="",text="",title="",buttons=[],active=True,closebutton
 #o = Create95Window(icon="95/Critical Error.png",text="G:\\\n\nA device attached to the system is not functioning.",title="G:\\",buttons=[["OK",1]],closebutton=False,active=True)
 #o = Create95Button(text="Yes",underline=True,style=1)
 #o = Create3_1Button("OK",0)
-o = Create2000Window(icon="95/Exclamation.png",text="The file C:\\WINDOWS\\SYSTEM\\Krnl386.exe contains no icons.\n\nChoose an icon from the list or specify a different file.",title="Change Icon",buttons=[["OK",1]],closebutton=False)
+#o = Create98Window(icon="95/Exclamation.png",text="Look how fancy",title="amazing",buttons=[["OK",1]],closebutton=False,gradient1active=(181,60,10),gradient2active=(230,154,40))
+o = FrameXPWindow(image="output - Copy.png",title="how cool",maximize=4)
 o.show()
 o.save("output.png")
+
+
+
+
+
 
 
